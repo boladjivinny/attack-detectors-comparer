@@ -58,9 +58,13 @@
 import os
 import sys
 import argparse
+import pandas as pd
+import numpy as np
 
 from . import *
 from .utils import *
+from .processers import FlowBasedProcesser, TimeBasedProcesser, WeightBasedProcesser
+from .algorithms import Algorithm, TimeBasedAlgorithm, WeightBasedAlgorithm
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -93,12 +97,18 @@ def parse_args():
         help="print the final scores in csv format into the specified file.")
     parser.add_argument('-o', '--out', type=argparse.FileType('w'),
         default=sys.stdout, help="store in a log file everything that is"\
-             "shown in the screen.")
+             " shown in the screen.")
     parser.add_argument('-P', '--plot-to-file', type=argparse.FileType('w'),
         help="instead of showing the plot on the screen, store it in a file."\
             "Type of plot given by the file extension.")
     parser.add_argument('-l', '--label', type=str, default='Label',
         help="the title of the column representing the label field.")
+    parser.add_argument('-L', '--labels', type=str, nargs='+', 
+        help="the labels available in the dataset (i.e. negative, positive,"\
+            " and optionally, background labels", default=['normal', 'botnet'])
+    parser.add_argument('-B', '--background', action='store_true',
+        help='whether the metrics for background traffic should be '\
+        'considered')
     parser.add_argument('file', metavar="input", type=argparse.FileType('r'),
         help="sorted input netflow labeled file to analyze "\
             "(Netflow or Argus).")
@@ -110,23 +120,16 @@ def parse_args():
 
     if args.type in ["weighted", "time"] and (args.time == 0):
         parser.error(f"[-t {args.type}] requires -T <time window>.")
+    if not (2 <= len(args.labels) <= 3):
+        parser.error('--labels expects 2 or 3 values')
+    # if background, we need three labels
+    if (args.background and len(args.labels) !=3):
+        parser.error('--background or -B requires at least 3 labels.')
+    
 
     return args
 
 def main():
-    global debug
-    global verbose
-    global doplot
-    global alpha
-    global comparison_type
-    global time_windows_group
-    global csv_file
-    global out_file
-    global plot_file
-
-    file = ""
-    comparison_type = ""
-    time_window = 0
     args = parse_args()
 
     verbose = args.verbose
@@ -139,27 +142,51 @@ def main():
     csv_file = args.csv
     out_file = args.out
     plot_file = args.plot_to_file
+    label = args.label
+    background = args.background
+    labels = args.labels
 
-    try:
-        try:
-            if (out_file != sys.stdout):
-                os.dup2(out_file.fileno(), sys.stdout.fileno())
-                os.dup2(out_file.fileno(), sys.stderr.fileno())
+    # create the processer
+    pp = FlowBasedProcesser("Label", labels)
+    tt = TimeBasedProcesser("Label", labels)
+    ww = WeightBasedProcesser("Label", labels)
+
+    data = pd.read_csv(file, usecols=['StartTime', 'SrcAddr', label], parse_dates=[0])
+
+    algo1 = Algorithm("real", data.drop(columns=['Label']), data['Label'], labels)
+    algo2 = TimeBasedAlgorithm("AllPositive", data.drop(columns=['Label']), np.array(['botnet'] * data.shape[0]), labels)
+
+    algo2 = WeightBasedAlgorithm("AllPositive", data.drop(columns=['Label']), np.array(['botnet'] * data.shape[0]), labels)
+    algo3 = WeightBasedAlgorithm("AllNegative", data.drop(columns=['Label']), np.array(['normal'] * data.shape[0]), labels)
+
+    #pp(algo1, algo2)
+
+    ww(time_window, algo1, algo2, algo3, alpha=alpha)
+    #pp(algo1, algo2)
+    ww.report_results([algo2, algo3])
+
+    # create the algo
+
+    # try:
+    #     try:
+    #         if (out_file != sys.stdout):
+    #             os.dup2(out_file.fileno(), sys.stdout.fileno())
+    #             os.dup2(out_file.fileno(), sys.stderr.fileno())
             
-            process_file(file, comparison_type, time_window)
-            if doplot:
-                plot(file, time_window, comparison_type, time_windows_group)
+    #         process_file(file, comparison_type, time_window)
+    #         if doplot:
+    #             plot(file, time_window, comparison_type, time_windows_group)
 
-        except Exception as e:
-                print("misc. exception (runtime error from user callback?):", e)
-        except KeyboardInterrupt:
-                sys.exit(1)
+    #     except Exception as e:
+    #             print("misc. exception (runtime error from user callback?):", e)
+    #     except KeyboardInterrupt:
+    #             sys.exit(1)
 
 
-    except KeyboardInterrupt:
-        # CTRL-C pretty handling.
-        print("Keyboard Interruption!. Exiting.")
-        sys.exit(1)
+    # except KeyboardInterrupt:
+    #     # CTRL-C pretty handling.
+    #     print("Keyboard Interruption!. Exiting.")
+    #     sys.exit(1)
 
 
 if __name__ == '__main__':
