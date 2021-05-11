@@ -21,14 +21,12 @@ class TimeBasedProcesser(BaseProcesser):
         cur = 1
         #print(data['Timeframe'].tolist())
 
-        start = time.time()
         while (data.loc[data.Timeframe == -1].shape[0] > 0):
             #print("in there")
             # find the min
             start_time = data.loc[data.Timeframe == -1, 'StartTime'].min()
             data.loc[(data.StartTime >= start_time) & (data.StartTime < start_time + datetime.timedelta(seconds=window_size)), 'Timeframe'] = cur
             cur += 1
-        end = time.time()
         #start_time = data['StartTime'].min()
         # data['Timeframe'] = (((
         #     data['StartTime'] - start_time).dt.total_seconds(
@@ -47,7 +45,6 @@ class TimeBasedProcesser(BaseProcesser):
             # collect the true labels according to the authors' strategy
             # assign the normal label by default
 
-
             ips_to_labels = {
                 ip: self.labels[1] if self.labels[1] in records[
                     self.label_column].unique() 
@@ -64,17 +61,17 @@ class TimeBasedProcesser(BaseProcesser):
             print(f'Amount of labels: {labels_report}')
             print(f'Lines read: {chunk.shape[0]}')
             print('####################################')
+            print()
 
 
             # now the labels for each algorithm and we compared
             for algo in args:
-                seq = algo.data.loc[data.index, :]
+                seq = algo.data.loc[chunk.index, :]
                 algo_labels = {
-                ip: self.labels[1] if self.labels[1] in seq[
+                ip: self.labels[1] if self.labels[1] in records[
                     self.label_column].unique() 
                     else self.labels[0] for ip, records in seq.groupby(
                         'SrcAddr')}
-                print("collected results")
                 y = [algo_labels[ip] for ip in ips_to_labels.keys()]
                 algo.cTN, algo.cFP, algo.cFN, algo.cTP = confusion_matrix(
                     true_y, y, labels=self.labels[:3]).ravel()
@@ -100,12 +97,9 @@ class TimeBasedProcesser(BaseProcesser):
                 except ZeroDivisionError:
                     algo.cErrorRate = -1
 
-                print("starting the process")
-
                 self._process_time_window(true_y, algo, window, **kwargs)
-                print("done")
             
-            self._show_reports(algos)
+            self._show_reports(*args)
 
         # # generare the time windows
         # # print the final report
@@ -115,7 +109,8 @@ class TimeBasedProcesser(BaseProcesser):
     def _process_time_window(self, y_true, algo, tw_id, **kwargs):
         algo.computeMetrics()
 
-    def _show_reports(self, algos):
+    def _show_reports(self, *algos):
         print('+ Current Errors +')
         for algo in algos:
-            algo.current_reportprint()
+            algo.current_reportprint('AllPositive')
+        print()

@@ -16,12 +16,13 @@ class WeightBasedProcesser(TimeBasedProcesser):
             tw_id + FIRST_SUM)) + SECOND_SUM
         algo.compute_weighted_metrics(correcting_function, y_true)
 
-    def _show_reports(self, algos):
-        super()._show_reports()
+    def _show_reports(self, *algos):
+        super()._show_reports(*algos)
         print('+ Current Weighted +')
         for algo in algos:
-            algo.weighted_current_reportprint()
+            algo.weighted_current_reportprint("AllPositive")
+        print()
         print('+ Cumulative Weighted +')
         for algo in algos:
-            algo.weighted_reportprint()
-        
+            algo.weighted_reportprint("AllPositive")
+        print()

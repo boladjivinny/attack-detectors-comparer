@@ -9,11 +9,6 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
         self.t_TN = 0.0 # d
         self.t_FP = 0.0 # c
         self.t_FN = 0.0 # b
-        self.t_B1 = 0.0 # Predicted negative and real was background
-        self.t_B2 = 0.0 # Predicted positive and real was background
-        self.t_B3 = 0.0 # Predicted background and real was negative
-        self.t_B4 = 0.0 # Predicted background and real was positive
-        self.t_B5 = 0.0 # Predicted background and real was background
         self.t_TPR = -1.0
         self.t_TNR = -1.0
         self.t_FNR = -1.0
@@ -44,14 +39,13 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
     def weighted_reportprint(self, longest_name):
         """ The reported values """ 
         # I still did not found out how to use longest_name to change the width of the columns...
-        text = '{0:30} t-TP={1:.4f}, t-TN={2:8}, t-FP={3:8}, t-FN={4:.4f}, t-TPR={5:.3f}, t-TNR={6:.3f}, t-FPR={7:.3f}, t-FNR={8:.3f}, t-Precision={9:7.4f}, t-Accuracy={10:5.4f}, t-ErrorRate={11:5.3f}, t-FM1={12:7.4f}, t-FM2={13:7.4f}, t-FM05={14:7.4f}, t-B1={15:8}, t-B2={16:8}, t-B3={17:3}, t-B4={18:3}, t-B5={19:3}'.format(self.name, self.t_TP, self.t_TN, self.t_FP, self.t_FN, self.t_TPR, self.t_TNR, self.t_FPR, self.t_FNR, self.t_Precision, self.t_Accuracy, self.t_ErrorRate, self.t_fmeasure1, self.t_fmeasure2, self.t_fmeasure05, self.t_B1, self.t_B2, self.t_B3, self.t_B4, self.t_B5)
+        text = '{0:30} t-TP={1:.4f}, t-TN={2:8}, t-FP={3:8}, t-FN={4:.4f}, t-TPR={5:.3f}, t-TNR={6:.3f}, t-FPR={7:.3f}, t-FNR={8:.3f}, t-Precision={9:7.4f}, t-Accuracy={10:5.4f}, t-ErrorRate={11:5.3f}, t-FM1={12:7.4f}, t-FM2={13:7.4f}, t-FM05={14:7.4f}'.format(self.name, self.t_TP, self.t_TN, self.t_FP, self.t_FN, self.t_TPR, self.t_TNR, self.t_FPR, self.t_FNR, self.t_Precision, self.t_Accuracy, self.t_ErrorRate, self.t_fmeasure1, self.t_fmeasure2, self.t_fmeasure05)
         print (text)
 
     def weighted_current_reportprint(self, longest_name):
         """ The reported values """ 
         # I still did not found out how to use longest_name to change the width of the columns...
-        print ('{0:30} t-TP={1:.4f}, t-TN={2:8}, t-FP={3:8}, t-FN={4:.4f}, t-TPR={5:.3f}, t-TNR={6:.3f}, t-FPR={7:.3f}, t-FNR={8:.3f}, t-Precision={9:7.4f}, t-Accuracy={10:5.4f}, t-ErrorRate={11:5.3f}, t-FM1={12:7.4f}, t-FM2={13:7.4f}, t-FM05={14:7.4f}, t-B1={15:8}, t-B2={16:8}, t-B3={17:3}, t-B4={18:3}, t-B5={19:3}'.format(self.name, self.ct_TP, self.ct_TN, self.ct_FP, self.ct_FN, self.ct_TPR, self.ct_TNR, self.ct_FPR, self.ct_FNR, self.ct_Precision, self.ct_Accuracy, self.ct_ErrorRate, self.ct_fmeasure1, self.ct_fmeasure2, self.ct_fmeasure05, self.ct_B1, self.ct_B2, self.ct_B3, self.ct_B4, self.ct_B5))
-
+        print ('{0:30} t-TP={1:.4f}, t-TN={2:8}, t-FP={3:8}, t-FN={4:.4f}, t-TPR={5:.3f}, t-TNR={6:.3f}, t-FPR={7:.3f}, t-FNR={8:.3f}, t-Precision={9:7.4f}, t-Accuracy={10:5.4f}, t-ErrorRate={11:5.3f}, t-FM1={12:7.4f}, t-FM2={13:7.4f}, t-FM05={14:7.4f}'.format(self.name, self.ct_TP, self.ct_TN, self.ct_FP, self.ct_FN, self.ct_TPR, self.ct_TNR, self.ct_FPR, self.ct_FNR, self.ct_Precision, self.ct_Accuracy, self.ct_ErrorRate, self.ct_fmeasure1, self.ct_fmeasure2, self.ct_fmeasure05))
 
     def compute_weighted_metrics(self, correcting_function, y_true):
         """ Compute the weighted metrics. Receives the correcting_function value and the amount of labels in the current time window """ 

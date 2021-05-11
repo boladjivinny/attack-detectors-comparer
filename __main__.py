@@ -153,11 +153,11 @@ def main():
 
     data = pd.read_csv(file, usecols=['StartTime', 'SrcAddr', label], parse_dates=[0])
 
-    algo1 = Algorithm("real", data.drop(columns=['Label']), data['Label'], labels)
-    algo2 = TimeBasedAlgorithm("AllPositive", data.drop(columns=['Label']), np.array(['botnet'] * data.shape[0]), labels)
+    algo1 = Algorithm("real", data.drop(columns=[label]), data[label], labels)
+    #algo2 = TimeBasedAlgorithm("AllPositive", data.drop(columns=[label]), np.array(['botnet'] * data.shape[0]), labels)
 
-    algo2 = WeightBasedAlgorithm("AllPositive", data.drop(columns=['Label']), np.array(['botnet'] * data.shape[0]), labels)
-    algo3 = WeightBasedAlgorithm("AllNegative", data.drop(columns=['Label']), np.array(['normal'] * data.shape[0]), labels)
+    algo2 = WeightBasedAlgorithm("AllPositive", data.drop(columns=[label]), np.array(['botnet'] * data.shape[0]), labels)
+    algo3 = WeightBasedAlgorithm("AllNegative", data.drop(columns=[label]), np.array(['normal'] * data.shape[0]), labels)
 
     #pp(algo1, algo2)
 
