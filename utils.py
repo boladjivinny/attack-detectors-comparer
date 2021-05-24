@@ -9,7 +9,7 @@ def get_objects_type(comparison_type):
         return FlowBasedProcesser, Algorithm
     elif comparison_type == 'time':
         return TimeBasedProcesser, TimeBasedAlgorithm
-    elif comparison_type == 'weight':
+    elif comparison_type == 'weighted':
         return WeightBasedProcesser, WeightBasedAlgorithm
 
     # if not, raise an error
