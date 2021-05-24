@@ -9,7 +9,7 @@ def get_objects_type(comparison_type):
         return FlowBasedProcesser, Algorithm
     elif comparison_type == 'time':
         return TimeBasedProcesser, TimeBasedAlgorithm
-    elif comparison_type == 'weighted':
+    elif comparison_type == 'weight':
         return WeightBasedProcesser, WeightBasedAlgorithm
 
     # if not, raise an error
@@ -30,7 +30,7 @@ def parse_args():
     )
     parser.add_argument('-v', '--verbose', action="count", 
         help="verbosity level", default=0)
-    parser.add_argument('-t', '--type', choices=["flow", "time", "weighted"],
+    parser.add_argument('-t', '--type', choices=["flow", "time", "weight"],
         help="type of comparison. Flow based (-t flow), time based (-t time)"\
             ", or weighted (-t weight).", default="flow")
     parser.add_argument('-T', '--time', type=int, help="while using time "\
