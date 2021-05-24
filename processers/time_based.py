@@ -38,7 +38,7 @@ class TimeBasedProcesser(BaseProcesser):
                 print(f'Amount of algorithms being used: {len(args)}')
                 ips_report = {ll: true_y.count(ll) for ll in self.labels}
                 print(f'Amount of unique ips: {ips_report}')
-                labels_report = dict(chunk.Label.value_counts())
+                labels_report = dict(chunk[self.label_column].value_counts())
                 print(f'Amount of labels: {labels_report}')
                 print(f'Lines read: {chunk.shape[0]}')
                 print('####################################')
