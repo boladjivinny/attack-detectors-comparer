@@ -8,7 +8,8 @@ class FlowBasedProcesser(BaseProcesser):
         self.label_column = label_column
         self.labels = labels
 
-    def __call__(self, reference, *args):
+
+    def __call__(self, reference, *args, window_size=None, alpha=None, verbose=0):
         # here we need to compare the results
         true_y = reference.data[self.label_column]
 

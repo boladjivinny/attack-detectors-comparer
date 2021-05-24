@@ -8,8 +8,8 @@ class Algorithm:
         self.name = name
         self.label = label_column
         self.labels = labels
-        self._data = X
-        self._data[self.label] = y
+        self._data = X.copy()
+        self._data[self.label] = y.copy()
 
         # the metrics
         self.TP = 0 # a
@@ -33,10 +33,11 @@ class Algorithm:
         self.fmeasure05 = -1
 
 
+
     def __call__(self, date: datetime, srcIP: str):
         return self._data.loc[
             self._data.StartTime == date & self._data.SrcAddr == srcIP,
-             self.label]
+            self.label]
 
     def __repr__(self):
         """ Default printing method """ 

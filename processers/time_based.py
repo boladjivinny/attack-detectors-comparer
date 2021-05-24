@@ -1,6 +1,4 @@
-import pandas as pd
 import datetime
-import time
 
 from .base import BaseProcesser
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score
@@ -12,11 +10,8 @@ class TimeBasedProcesser(BaseProcesser):
         self.label_column = label_column
         self.labels = labels
 
-    def __call__(self, window_size, reference, *args, **kwargs):
-        # here we need to compare the results
-
-        #true_y = reference.data[self.label_column]
-        data = reference.data.copy()
+    def __call__(self, reference, *args, window_size=None, alpha=None, verbose=0):
+        data = reference.data
         data['Timeframe'] = -1
         cur = 1
         #print(data['Timeframe'].tolist())
@@ -27,41 +22,27 @@ class TimeBasedProcesser(BaseProcesser):
             start_time = data.loc[data.Timeframe == -1, 'StartTime'].min()
             data.loc[(data.StartTime >= start_time) & (data.StartTime < start_time + datetime.timedelta(seconds=window_size)), 'Timeframe'] = cur
             cur += 1
-        #start_time = data['StartTime'].min()
-        # data['Timeframe'] = (((
-        #     data['StartTime'] - start_time).dt.total_seconds(
-        #         ).astype('int')) // time) + 1
 
-        # print(data['Timeframe'].unique())
-        # print(data['Timeframe'].nunique())
-
-        # exit()
-
-        # 
-        #print(reference.data.groupby('Timeframe').head())
         for window, chunk in data.groupby('Timeframe'):
-            # here we collect the statistics time based ones and 
-            # make sure they are cumulated
-            # collect the true labels according to the authors' strategy
-            # assign the normal label by default
-
             ips_to_labels = {
                 ip: self.labels[1] if self.labels[1] in records[
                     self.label_column].unique() 
                     else self.labels[0] for ip, records in chunk.groupby(
                         'SrcAddr')}
-            true_y = [v for k, v in ips_to_labels.items()]
+            
+            true_y = [v for _, v in ips_to_labels.items()]
 
-            print("####################################")
-            print(f'Time Window Number: {window}')
-            print(f'Amount of algorithms being used: {len(args)}')
-            ips_report = {ll: true_y.count(ll) for ll in self.labels}
-            print(f'Amount of unique ips: {ips_report}')
-            labels_report = dict(chunk.Label.value_counts())
-            print(f'Amount of labels: {labels_report}')
-            print(f'Lines read: {chunk.shape[0]}')
-            print('####################################')
-            print()
+            if verbose > 0:
+                print("####################################")
+                print(f'Time Window Number: {window}')
+                print(f'Amount of algorithms being used: {len(args)}')
+                ips_report = {ll: true_y.count(ll) for ll in self.labels}
+                print(f'Amount of unique ips: {ips_report}')
+                labels_report = dict(chunk.Label.value_counts())
+                print(f'Amount of labels: {labels_report}')
+                print(f'Lines read: {chunk.shape[0]}')
+                print('####################################')
+                print()
 
 
             # now the labels for each algorithm and we compared
@@ -73,6 +54,34 @@ class TimeBasedProcesser(BaseProcesser):
                     else self.labels[0] for ip, records in seq.groupby(
                         'SrcAddr')}
                 y = [algo_labels[ip] for ip in ips_to_labels.keys()]
+
+                # display errors
+                if verbose > 1:
+                    for addr, ty, py in zip(ips_to_labels.keys(), true_y, y):
+                        print (f' > Computing errors for algorithm: '\
+                        f'{algo.name}. Ip: {addr}. Real label: {ty}. '\
+                        f'Predicted label: {py}')
+                        if ty == self.labels[0]: # normal
+                            # TN
+                            if py == ty:
+                                print (f'\tReal Label: \x1b\x5b1;33;40m{ty}'\
+                                f'\x1b\x5b0;0;40m, {algo.name}: {py}. '\
+                                f'Decision \x1b\x5b1;33;40mTN\x1b\x5b0;0;40m')
+                            else:
+                            # FP
+                                print (f'\tReal Label: \x1b\x5b1;31;40m{ty}'\
+                                f'\x1b\x5b0;0;40m, {algo.name}: {py}. '\
+                                f'Decision \x1b\x5b1;31;40mFP\x1b\x5b0;0;40m')
+                        elif ty == self.labels[1]: # botnet
+                            if py == ty:
+                                print (f'\tReal Label: \x1b\x5b1;33;40m{ty}'\
+                                f'\x1b\x5b0;0;40m, {algo.name}: {py}. '\
+                                f'Decision \x1b\x5b1;33;40mTP\x1b\x5b0;0;40m')
+                            else:
+                                print (f'\tReal Label: \x1b\x5b1;33;40m{ty}'\
+                                f'\x1b\x5b0;0;40m, {algo.name}: {py}. '\
+                                f'Decision \x1b\x5b1;31;40mFN\x1b\x5b0;0;40m')
+
                 algo.cTN, algo.cFP, algo.cFN, algo.cTP = confusion_matrix(
                     true_y, y, labels=self.labels[:3]).ravel()
                 algo.cTNR, algo.cFPR, algo.cFNR, algo.cTPR = confusion_matrix(
@@ -97,16 +106,12 @@ class TimeBasedProcesser(BaseProcesser):
                 except ZeroDivisionError:
                     algo.cErrorRate = -1
 
-                self._process_time_window(true_y, algo, window, **kwargs)
+                self._process_time_window(true_y, algo, window, alpha)
             
-            self._show_reports(*args)
+            if verbose > 0:
+                self._show_reports(*args)
 
-        # # generare the time windows
-        # # print the final report
-        # for algo in args:
-        #     algo.computeMetrics()
-
-    def _process_time_window(self, y_true, algo, tw_id, **kwargs):
+    def _process_time_window(self, y_true, algo, tw_id, alpha):
         algo.computeMetrics()
 
     def _show_reports(self, *algos):

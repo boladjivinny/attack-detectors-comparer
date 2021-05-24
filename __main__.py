@@ -54,86 +54,20 @@
 # 0.1 dic 8 2011
 #       First version
 
-
-import os
 import sys
-import argparse
+
 import pandas as pd
 import numpy as np
 
-from . import *
-from .utils import *
-from .processers import FlowBasedProcesser, TimeBasedProcesser, WeightBasedProcesser
-from .algorithms import Algorithm, TimeBasedAlgorithm, WeightBasedAlgorithm
+from os.path import basename, splitext
+from os import dup2
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        prog="BotnetDetectorsComparer",
-        description='''
-            This program is free software; you can
-            redistribute it and/or modify it under the terms 
-            of the GNU General Public License as published
-            by the Free Software Foundation; either version
-            2 of the License, or (at your option) any later 
-            version.
-        ''',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    parser.add_argument('-v', '--verbose', action="count", 
-        help="verbosity level", default=0)
-    parser.add_argument('-D', '--debug', action='store_true', 
-        help="debug. In debug mode the statistics run live.")
-    parser.add_argument('-t', '--type', choices=["flow", "time", "weighted"],
-        help="type of comparison. Flow based (-t flow), time based (-t time)"\
-            ", or weighted (-t weight).", default="flow")
-    parser.add_argument('-T', '--time', type=int, help="while using time "\
-        "based comparison, specify the time window to use in seconds.",
-        default=0)
-    parser.add_argument('-p', '--plot', action="store_true", 
-        help="plot the fmeasures of all methods.")
-    parser.add_argument('-a', '--alpha', type=float, default=0.4,
-        help="in weight mode, use this alpha for computing the score")
-    parser.add_argument('-c', '--csv', type=argparse.FileType('w'),
-        help="print the final scores in csv format into the specified file.")
-    parser.add_argument('-o', '--out', type=argparse.FileType('w'),
-        default=sys.stdout, help="store in a log file everything that is"\
-             " shown in the screen.")
-    parser.add_argument('-P', '--plot-to-file', type=argparse.FileType('w'),
-        help="instead of showing the plot on the screen, store it in a file."\
-            "Type of plot given by the file extension.")
-    parser.add_argument('-l', '--label', type=str, default='Label',
-        help="the title of the column representing the label field.")
-    parser.add_argument('-L', '--labels', type=str, nargs='+', 
-        help="the labels available in the dataset (i.e. negative, positive,"\
-            " and optionally, background labels", default=['normal', 'botnet'])
-    parser.add_argument('-B', '--background', action='store_true',
-        help='whether the metrics for background traffic should be '\
-        'considered')
-    parser.add_argument('file', metavar="input", type=argparse.FileType('r'),
-        help="sorted input netflow labeled file to analyze "\
-            "(Netflow or Argus).")
-    parser.add_argument('predictions', help="the prediction files for each"\
-        " of the methods being evaluated", nargs="+",
-        type=argparse.FileType('r'))
-
-    args = parser.parse_args()
-
-    if args.type in ["weighted", "time"] and (args.time == 0):
-        parser.error(f"[-t {args.type}] requires -T <time window>.")
-    if not (2 <= len(args.labels) <= 3):
-        parser.error('--labels expects 2 or 3 values')
-    # if background, we need three labels
-    if (args.background and len(args.labels) !=3):
-        parser.error('--background or -B requires at least 3 labels.')
-    
-
-    return args
+from .utils import get_objects_type, parse_args
 
 def main():
     args = parse_args()
 
     verbose = args.verbose
-    debug = args.debug or verbose > 0
     file = args.file
     comparison_type = args.type
     time_window = args.time
@@ -143,50 +77,71 @@ def main():
     out_file = args.out
     plot_file = args.plot_to_file
     label = args.label
-    background = args.background
+    dummy = args.generate_dummy_algos
     labels = args.labels
+    predictions = args.predictions
 
     # create the processer
-    pp = FlowBasedProcesser("Label", labels)
-    tt = TimeBasedProcesser("Label", labels)
-    ww = WeightBasedProcesser("Label", labels)
+    cls_proc, cls_alg = get_objects_type(comparison_type)
 
-    data = pd.read_csv(file, usecols=['StartTime', 'SrcAddr', label], parse_dates=[0])
+    proc = cls_proc(label, labels)
 
-    algo1 = Algorithm("real", data.drop(columns=[label]), data[label], labels)
-    #algo2 = TimeBasedAlgorithm("AllPositive", data.drop(columns=[label]), np.array(['botnet'] * data.shape[0]), labels)
+    # create the algorithms
+    data = pd.read_csv(
+        file, 
+        usecols=['StartTime', 'SrcAddr', label], parse_dates=[0])
 
-    algo2 = WeightBasedAlgorithm("AllPositive", data.drop(columns=[label]), np.array(['botnet'] * data.shape[0]), labels)
-    algo3 = WeightBasedAlgorithm("AllNegative", data.drop(columns=[label]), np.array(['normal'] * data.shape[0]), labels)
+    features = data.drop(columns=[label])
 
-    #pp(algo1, algo2)
+    # load the labels as "str" to make the processing easy
 
-    ww(time_window, algo1, algo2, algo3, alpha=alpha)
-    #pp(algo1, algo2)
-    ww.report_results([algo2, algo3])
+    baseline = cls_alg(
+        "real", features, data[label].astype(str), labels, label
+    )
 
+    # methods
+    algorithms = [
+        cls_alg(
+            splitext(basename(f.name))[0], 
+            features, 
+            np.loadtxt(f, dtype='str'), labels, label
+        )
+        for f in predictions
+    ]
+
+    if dummy:
+        names = ['AllNegative', 'AllPositive']
+        algorithms += [
+            cls_alg(
+                name, features, 
+                np.array([labels[i]] * data.shape[0]), labels, label
+            )
+            for i, name in enumerate(names)
+        ]
     # create the algo
 
-    # try:
-    #     try:
-    #         if (out_file != sys.stdout):
-    #             os.dup2(out_file.fileno(), sys.stdout.fileno())
-    #             os.dup2(out_file.fileno(), sys.stderr.fileno())
+    try:
+        try:
+            if out_file is not None:
+                dup2(out_file.fileno(), sys.stdout.fileno())
+                dup2(out_file.fileno(), sys.stderr.fileno())
             
-    #         process_file(file, comparison_type, time_window)
-    #         if doplot:
-    #             plot(file, time_window, comparison_type, time_windows_group)
+            proc(baseline, *algorithms, window_size=time_window, alpha=alpha, verbose=verbose)
+            proc.report_results(algorithms)
+            if doplot:
+                #plot(file, time_window, comparison_type, time_windows_group)
+                pass
 
-    #     except Exception as e:
-    #             print("misc. exception (runtime error from user callback?):", e)
-    #     except KeyboardInterrupt:
-    #             sys.exit(1)
+        except Exception as e:
+                print("misc. exception (runtime error from user callback?):", e)
+        except KeyboardInterrupt:
+                exit(1)
 
 
-    # except KeyboardInterrupt:
-    #     # CTRL-C pretty handling.
-    #     print("Keyboard Interruption!. Exiting.")
-    #     sys.exit(1)
+    except KeyboardInterrupt:
+        # CTRL-C pretty handling.
+        print("Keyboard Interruption!. Exiting.")
+        exit(1)
 
 
 if __name__ == '__main__':

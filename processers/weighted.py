@@ -7,13 +7,13 @@ FIRST_SUM = 0
 SECOND_SUM = 1
 
 class WeightBasedProcesser(TimeBasedProcesser):
-    def _process_time_window(self, y_true, algo, tw_id, **kwargs):
-        alpha = kwargs['alpha']
+    def _process_time_window(self, y_true, algo, tw_id, alpha):
         # call the parent
         super()._process_time_window(y_true, algo, tw_id)
         # then compute weighted metrics
         correcting_function = math.exp(-alpha * (
             tw_id + FIRST_SUM)) + SECOND_SUM
+        print(f'alpha={alpha}, id={tw_id}, first_sum={FIRST_SUM}, second_sum={SECOND_SUM}, cf={correcting_function}')
         algo.compute_weighted_metrics(correcting_function, y_true)
 
     def _show_reports(self, *algos):
