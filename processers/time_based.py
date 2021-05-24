@@ -111,7 +111,7 @@ class TimeBasedProcesser(BaseProcesser):
             if verbose > 0:
                 self._show_reports(*args)
 
-    def _process_time_window(self, y_true, algo, tw_id, alpha):
+    def _process_time_window(self, y_true, algo, tw_id, alpha=None):
         algo.computeMetrics()
 
     def _show_reports(self, *algos):

@@ -1,6 +1,4 @@
 from .time_based import TimeBasedProcesser
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score
-from sklearn.metrics import f1_score, fbeta_score
 import math
 
 FIRST_SUM = 0
