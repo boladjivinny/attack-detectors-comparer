@@ -38,7 +38,7 @@ def parse_args():
         default=0)
     parser.add_argument('-p', '--plot', action="store_true", 
         help="plot the fmeasures of all methods.")
-    parser.add_argument('-a', '--alpha', type=float, default=0.4,
+    parser.add_argument('-a', '--alpha', type=float, default=0.01,
         help="in weight mode, use this alpha for computing the score")
     parser.add_argument('-c', '--csv', type=argparse.FileType('w'),
         help="print the final scores in csv format into the specified file.")
