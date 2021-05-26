@@ -86,11 +86,17 @@ def main():
 
     proc = cls_proc(label, labels)
 
+    import time
+
     # create the algorithms
+
+    s = time.time()
     data = pd.read_csv(
         file, 
         usecols=['StartTime', 'SrcAddr', label], parse_dates=[0])
 
+    print(f"loaded data in {time.time() - s} seconds.")
+    s = time.time()
     features = data.drop(columns=[label])
 
     # load the labels as "str" to make the processing easy
@@ -98,8 +104,9 @@ def main():
     baseline = cls_alg(
         "real", features, data[label].astype(str), labels, label
     )
-
+    print(f"created baseline algo in {time.time() - s} seconds.")
     # methods
+    s = time.time()
     algorithms = [
         cls_alg(
             splitext(basename(f.name))[0], 
@@ -109,6 +116,9 @@ def main():
         for f in predictions
     ]
 
+    print(f"set up the algos in {time.time() - s} seconds.")
+
+    s = time.time()
     if dummy:
         names = ['AllNegative', 'AllPositive']
         algorithms += [
@@ -119,30 +129,25 @@ def main():
             for i, name in enumerate(names)
         ]
     # create the algo
+    print(f"set up the dummy in {time.time() - s} seconds.")
 
     try:
-        try:
-            if out_file is not None:
-                dup2(out_file.fileno(), sys.stdout.fileno())
-                dup2(out_file.fileno(), sys.stderr.fileno())
+        if out_file is not None:
+            dup2(out_file.fileno(), sys.stdout.fileno())
+            dup2(out_file.fileno(), sys.stderr.fileno())
             
-            proc(baseline, *algorithms, window_size=time_window, alpha=alpha, verbose=verbose)
-            proc.report_results(algorithms)
-            if doplot:
-                #plot(file, time_window, comparison_type, time_windows_group)
-                pass
+        proc(baseline, *algorithms, window_size=time_window, alpha=alpha, verbose=verbose)
+        proc.report_results(algorithms)
+        if doplot:
+            #plot(file, time_window, comparison_type, time_windows_group)
+            pass
 
-        except Exception as e:
-                print("misc. exception (runtime error from user callback?):", e)
-        except KeyboardInterrupt:
-                exit(1)
-
-
+    except Exception as e:
+            print("misc. exception (runtime error from user callback?):", e)
     except KeyboardInterrupt:
         # CTRL-C pretty handling.
         print("Keyboard Interruption!. Exiting.")
         exit(1)
-
 
 if __name__ == '__main__':
     main()

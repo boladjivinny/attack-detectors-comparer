@@ -13,24 +13,30 @@ class TimeBasedProcesser(BaseProcesser):
     def __call__(self, reference, *args, window_size=None, alpha=None, verbose=0):
         data = reference.data
         data['Timeframe'] = -1
-        cur = 1
-        #print(data['Timeframe'].tolist())
+        window = 1
+        processed = 0
 
-        while (data.loc[data.Timeframe == -1].shape[0] > 0):
-            #print("in there")
-            # find the min
-            start_time = data.loc[data.Timeframe == -1, 'StartTime'].min()
-            data.loc[(data.StartTime >= start_time) & (data.StartTime < start_time + datetime.timedelta(seconds=window_size)), 'Timeframe'] = cur
-            cur += 1
+        while (processed < data.shape[0]):
+            remainder = data.loc[data.Timeframe == -1]
+            start_time = remainder['StartTime'].min()
+            chunk = remainder.loc[(remainder.StartTime >= start_time) & (remainder.StartTime < start_time + datetime.timedelta(seconds=window_size))]
+            data.loc[chunk.index, 'Timeframe'] = window
+            processed += chunk.shape[0]
+            window += 1
 
-        for window, chunk in data.groupby('Timeframe'):
+            if window == 5:
+                exit()
+
             ips_to_labels = {
                 ip: self.labels[1] if self.labels[1] in records[
                     self.label_column].unique() 
                     else self.labels[0] for ip, records in chunk.groupby(
                         'SrcAddr')}
+
+            if window == 4:
+                print(ips_to_labels)
             
-            true_y = [v for _, v in ips_to_labels.items()]
+            true_y = [ips_to_labels[ip] for ip in ips_to_labels.keys()]
 
             if verbose > 0:
                 print("####################################")
@@ -52,6 +58,10 @@ class TimeBasedProcesser(BaseProcesser):
                     self.label_column].unique() 
                     else self.labels[0] for ip, records in seq.groupby(
                         'SrcAddr')}
+
+                if window == 4:
+                    print(f'{algo}: {algo_labels}')
+
                 y = [algo_labels[ip] for ip in ips_to_labels.keys()]
 
                 # display errors
@@ -108,6 +118,7 @@ class TimeBasedProcesser(BaseProcesser):
             
             if verbose > 0:
                 self._show_reports(*args)
+
 
     def _process_time_window(self, y_true, algo, tw_id, alpha=None):
         algo.computeMetrics()
