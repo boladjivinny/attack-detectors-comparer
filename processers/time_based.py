@@ -44,7 +44,6 @@ class TimeBasedProcesser(BaseProcesser):
                 print('####################################')
                 print()
 
-
             # now the labels for each algorithm and we compared
             for algo in args:
                 seq = algo.data.loc[chunk.index, :]
@@ -105,7 +104,6 @@ class TimeBasedProcesser(BaseProcesser):
                         + algo.FP + algo.FN + algo.TP)
                 except ZeroDivisionError:
                     algo.cErrorRate = -1
-
                 self._process_time_window(true_y, algo, window, alpha)
             
             if verbose > 0:
