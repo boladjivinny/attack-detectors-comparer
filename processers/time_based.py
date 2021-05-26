@@ -24,17 +24,11 @@ class TimeBasedProcesser(BaseProcesser):
             processed += chunk.shape[0]
             window += 1
 
-            if window == 5:
-                exit()
-
             ips_to_labels = {
                 ip: self.labels[1] if self.labels[1] in records[
                     self.label_column].unique() 
                     else self.labels[0] for ip, records in chunk.groupby(
                         'SrcAddr')}
-
-            if window == 4:
-                print(ips_to_labels)
             
             true_y = [ips_to_labels[ip] for ip in ips_to_labels.keys()]
 
@@ -58,9 +52,6 @@ class TimeBasedProcesser(BaseProcesser):
                     self.label_column].unique() 
                     else self.labels[0] for ip, records in seq.groupby(
                         'SrcAddr')}
-
-                if window == 4:
-                    print(f'{algo}: {algo_labels}')
 
                 y = [algo_labels[ip] for ip in ips_to_labels.keys()]
 
