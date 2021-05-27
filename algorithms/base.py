@@ -40,32 +40,32 @@ class Algorithm:
     def computeMetrics(self):
         """ Compute the metrics """ 
         try:
-            assert (self.TP + self.FN) != 0
-            self.TPR = self.TP / float( self.TP + self.FN )
+            self.TPR = float(self.TP) / float(self.TP + self.FN)
             self.FNR = 1.0 - self.TPR
-        except AssertionError:
+        except ZeroDivisionError:
             self.TPR = -1.0
             self.FNR = -1.0
 
         try:
-            assert ( self.TN + self.FP ) != 0
-            self.TNR = self.TN  / float( self.TN + self.FP )
+            self.TNR = float(self.TN) / float(self.TN + self.FP)
             self.FPR = 1 - self.TNR
-        except AssertionError:
+        except ZeroDivisionError:
             self.TNR = -1.0
             self.FPR = -1.0
 
         try:
-            self.Precision = float(self.TP) / float( self.TP + self.FP)
+            self.Precision = float(self.TP) / float(self.TP + self.FP)
         except ZeroDivisionError:
             self.Precision = -1.0
 
         try:
-            assert ( self.TP + self.TN + self.FP + self.FN ) != 0
             self.Accuracy = ( self.TP + self.TN ) / float( self.TP + self.TN + self.FP + self.FN )
+        except ZeroDivisionError:
+            self.Accuracy = -1.0
+
+        try:
             self.ErrorRate = ( self.FN + self.FP ) / float( self.TP + self.TN + self.FP + self.FN )
         except AssertionError:
-            self.Accuracy = -1.0
             self.ErrorRate = -1.0
 
         # F1-Measure.

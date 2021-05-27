@@ -39,18 +39,16 @@ class TimeBasedAlgorithm(Algorithm):
         """ Compute the metrics """ 
         super().computeMetrics()
         try:
-            assert (self.cTP + self.cFN) != 0
-            self.cTPR = self.cTP / float( self.cTP + self.cFN )
+            self.cTPR = float(self.cTP) / float( self.cTP + self.cFN )
             self.cFNR = 1.0 - self.cTPR
-        except AssertionError:
+        except ZeroDivisionError:
             self.cTPR = -1.0
             self.cFNR = -1.0
 
         try:
-            assert ( self.cTN + self.cFP ) != 0
-            self.cTNR = self.cTN  / float( self.cTN + self.cFP )
+            self.cTNR = float(self.cTN)  / float( self.cTN + self.cFP )
             self.cFPR = 1 - self.cTNR
-        except AssertionError:
+        except ZeroDivisionError:
             self.cTNR = -1.0
             self.cFPR = -1.0
 
@@ -60,11 +58,13 @@ class TimeBasedAlgorithm(Algorithm):
             self.cPrecision = -1.0
 
         try:
-            assert ( self.cTP + self.cTN + self.cFP + self.cFN ) != 0
             self.cAccuracy = ( self.cTP + self.cTN ) / float( self.cTP + self.cTN + self.cFP + self.cFN )
-            self.ErrorRate = ( self.cFN + self.cFP ) / float( self.cTP + self.cTN + self.cFP + self.cFN )
-        except AssertionError:
+        except ZeroDivisionError:
             self.cAccuracy = -1.0
+
+        try:
+            self.cErrorRate = ( self.cFN + self.cFP ) / float( self.cTP + self.cTN + self.cFP + self.cFN )
+        except AssertionError:
             self.cErrorRate = -1.0
 
         # F1-Measure.

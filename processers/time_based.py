@@ -1,4 +1,5 @@
 import datetime
+import time
 
 from .base import BaseProcesser
 from sklearn.metrics import confusion_matrix
@@ -15,32 +16,32 @@ class TimeBasedProcesser(BaseProcesser):
         for algo in args:
             data[algo.name] = algo.data[self.label_column]
         window = 0
-        processed = 0
+        remaining = data.shape[0]
 
         # initialize the start time
         start_time = data['StartTime'].min()
 
-        while (processed < data.shape[0]):
+        while (remaining > 0):
             end_time = start_time + datetime.timedelta(seconds=window_size)
             chunk = data.loc[(data['StartTime'] >= start_time) & (data['StartTime'] < end_time)]
             start_time = data.loc[data['StartTime'] >= end_time, 'StartTime'].min()
-            processed += chunk.shape[0]
+            remaining -= len(chunk)
             window += 1
-            data_by_ip = chunk.groupby('SrcAddr')
             true_y = None
             # now the labels for each algorithm and we compared
             ips = chunk.SrcAddr.unique()
-            technique_labels = map(lambda algo: list(map(lambda s: int(self.labels[1] in s[1][algo.name].tolist()), data_by_ip)), args)
+            technique_labels = map(lambda algo: list(map(lambda s: int(self.labels[1] in s[1][algo.name].tolist()), chunk.groupby('SrcAddr'))), args)
 
             for algo, y in zip(args, technique_labels):
                 if true_y is None:
                     # reference is expected to be the first one
                     true_y = y
+                    true_labels = list(map(lambda x: self.labels[x], true_y))
 
                     if verbose > 0:
                         print("####################################")
                         print(f'Time Window Number: {window}')
-                        print(f'Amount of algorithms being used: {len(args)}')
+                        print(f'Amount of algorithms being used: {len(args)-1}')
                         ips_report = {ll: true_y.count(i) for i, ll in enumerate(self.labels)}
                         print(f'Amount of unique ips: {ips_report}')
                         labels_report = dict(chunk[self.label_column].value_counts())
@@ -79,8 +80,7 @@ class TimeBasedProcesser(BaseProcesser):
 
                 algo.cTN, algo.cFP, algo.cFN, algo.cTP = confusion_matrix(
                     true_y, y, labels=[0, 1]).ravel()
-                prediction = list(map(lambda x: self.labels[x], true_y))
-                self._process_time_window(prediction, algo, window, alpha)
+                self._process_time_window(true_labels, algo, window, alpha)
             
             if verbose > 0:
                 self._show_reports(*args[1:])
