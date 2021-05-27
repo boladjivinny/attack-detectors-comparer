@@ -20,6 +20,7 @@ class TimeBasedProcesser(BaseProcesser):
         processed = 0
 
         while (processed < data.shape[0]):
+            print(f"Time window: {window + 1}")
             s = time.time()
             remainder = data.loc[data.Timeframe == -1]
             start_time = remainder['StartTime'].min()
@@ -33,7 +34,10 @@ class TimeBasedProcesser(BaseProcesser):
             print(f'collected the required information in {e - s} seconds.')
 
             s = time.time()
-            true_y = [self.labels[1] if record[self.label_column].isin(self.labels[1:]).any() else self.labels[0] for _, record in data_by_ip]
+            get_true_label = lambda s: int(self.labels[1] in s[1][self.label_column].tolist())
+            true_y = list(map(get_true_label, data_by_ip))
+            #true_y = [len(([self.labels[0]] + record[self.label_column]).unique()) - 1 for _, record in data_by_ip]
+
             e = time.time()
             print(f'retrieved the true labels in  {e - s} seconds.')
 
@@ -41,7 +45,7 @@ class TimeBasedProcesser(BaseProcesser):
                 print("####################################")
                 print(f'Time Window Number: {window}')
                 print(f'Amount of algorithms being used: {len(args)}')
-                ips_report = {ll: true_y.count(ll) for ll in self.labels}
+                ips_report = {ll: true_y.count(i) for i, ll in enumerate(self.labels)}
                 print(f'Amount of unique ips: {ips_report}')
                 labels_report = dict(chunk[self.label_column].value_counts())
                 print(f'Amount of labels: {labels_report}')
@@ -51,11 +55,23 @@ class TimeBasedProcesser(BaseProcesser):
 
             # now the labels for each algorithm and we compared
             ips = chunk.SrcAddr.unique()
-            for algo in args:
-                s = time.time()
-                y = [self.labels[1] if record[algo.name].isin(self.labels[1:]).any() else self.labels[0] for _, record in data_by_ip]
-                e = time.time()
-                print(f'retrieved the labels for {algo.name} in  {e - s} seconds.')
+            s = time.time()
+            technique_labels = map(lambda algo: list(map(lambda s: int(self.labels[1] in s[1][algo.name].tolist()), data_by_ip)), args)
+            # technique_labels = {
+            #     algo.name: list(map(lambda s: int(self.labels[1] in s[1][algo.name].tolist()), data_by_ip))
+            #     for algo in args
+            # }
+            e = time.time()
+            print(f"Average of { (e - s) / len(args) } seconds.")
+            for algo, y in zip(args, technique_labels):
+                # s = time.time()
+                # get_algo_label = lambda s: int(self.labels[1] in s[1][algo.name].tolist())
+                # y = list(map(get_algo_label, data_by_ip))
+                # e = time.time()
+                # print(f'retrieved the labels for {algo.name} in  {e - s} seconds.')
+
+                # print(true_y)
+                # print(y)
 
 
                 # display errors
@@ -87,8 +103,9 @@ class TimeBasedProcesser(BaseProcesser):
 
                 s = time.time()
                 algo.cTN, algo.cFP, algo.cFN, algo.cTP = confusion_matrix(
-                    true_y, y, labels=self.labels[:3]).ravel()
-                self._process_time_window(true_y, algo, window, alpha)
+                    true_y, y, labels=[0, 1]).ravel()
+                prediction = list(map(lambda x: self.labels[x], true_y))
+                self._process_time_window(prediction, algo, window, alpha)
                 e = time.time()
                 print(f'computed the metrics for {algo.name} in  {e - s} seconds.')
             
@@ -96,6 +113,10 @@ class TimeBasedProcesser(BaseProcesser):
                 self._show_reports(*args)
 
 
+    def _get_label(self, series):
+        # series is a tuple, (used internally)
+        return len([self.labels[0]] + series[1][self.label_column].unique()) - 1
+    
     def _process_time_window(self, y_true, algo, tw_id, alpha=None):
         algo.computeMetrics()
 
