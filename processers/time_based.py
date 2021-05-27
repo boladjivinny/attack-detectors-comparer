@@ -1,8 +1,7 @@
 import datetime
 
 from .base import BaseProcesser
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score
-from sklearn.metrics import f1_score, fbeta_score
+from sklearn.metrics import confusion_matrix
 
 class TimeBasedProcesser(BaseProcesser):
     # the arguments should be the techniques
@@ -13,7 +12,10 @@ class TimeBasedProcesser(BaseProcesser):
     def __call__(self, reference, *args, window_size=None, alpha=None, verbose=0):
         data = reference.data
         data['Timeframe'] = -1
-        window = 1
+
+        for algo in args:
+            data[algo.name] = algo.data[self.label_column]
+        window = 0
         processed = 0
 
         while (processed < data.shape[0]):
@@ -23,14 +25,9 @@ class TimeBasedProcesser(BaseProcesser):
             data.loc[chunk.index, 'Timeframe'] = window
             processed += chunk.shape[0]
             window += 1
+            data_by_ip = chunk.groupby('SrcAddr')
 
-            ips_to_labels = {
-                ip: self.labels[1] if self.labels[1] in records[
-                    self.label_column].unique() 
-                    else self.labels[0] for ip, records in chunk.groupby(
-                        'SrcAddr')}
-            
-            true_y = [ips_to_labels[ip] for ip in ips_to_labels.keys()]
+            true_y = [self.labels[1] if record[self.label_column].isin(self.labels[1:]).any() else self.labels[0] for _, record in data_by_ip]
 
             if verbose > 0:
                 print("####################################")
@@ -45,19 +42,13 @@ class TimeBasedProcesser(BaseProcesser):
                 print()
 
             # now the labels for each algorithm and we compared
+            ips = chunk.SrcAddr.unique()
             for algo in args:
-                seq = algo.data.loc[chunk.index, :]
-                algo_labels = {
-                ip: self.labels[1] if self.labels[1] in records[
-                    self.label_column].unique() 
-                    else self.labels[0] for ip, records in seq.groupby(
-                        'SrcAddr')}
-
-                y = [algo_labels[ip] for ip in ips_to_labels.keys()]
+                y = [self.labels[1] if record[algo.name].isin(self.labels[1:]).any() else self.labels[0] for _, record in data_by_ip]
 
                 # display errors
                 if verbose > 1:
-                    for addr, ty, py in zip(ips_to_labels.keys(), true_y, y):
+                    for addr, ty, py in zip(ips, true_y, y):
                         print (f' > Computing errors for algorithm: '\
                         f'{algo.name}. Ip: {addr}. Real label: {ty}. '\
                         f'Predicted label: {py}')
@@ -84,28 +75,7 @@ class TimeBasedProcesser(BaseProcesser):
 
                 algo.cTN, algo.cFP, algo.cFN, algo.cTP = confusion_matrix(
                     true_y, y, labels=self.labels[:3]).ravel()
-                algo.cTNR, algo.cFPR, algo.cFNR, algo.cTPR = confusion_matrix(
-                    true_y, y, normalize='true', labels=self.labels[:3]
-                    ).ravel()
-                algo.cAccuracy = accuracy_score(true_y, y, normalize=True)
-                algo.cPrecision = precision_score(true_y, y, 
-                    labels=self.labels[:3], pos_label=self.labels[1], 
-                    zero_division=0)
-                algo.cfmeasure1 = f1_score(true_y, y, 
-                    labels=self.labels[:3], pos_label=self.labels[1],
-                    zero_division=0)
-                algo.cfmeasure2 = fbeta_score(true_y, y, beta=2, 
-                    labels=self.labels[:3], pos_label=self.labels[1],
-                    zero_division=0)
-                algo.cfmeasure05 = fbeta_score(true_y, y, beta=5, 
-                    labels=self.labels[:3], pos_label=self.labels[1],
-                    zero_division=0)
-                try:
-                    algo.cErrorRate = (algo.FN + algo.FP) / (algo.TN 
-                        + algo.FP + algo.FN + algo.TP)
-                except ZeroDivisionError:
-                    algo.cErrorRate = -1
-                self._process_time_window(true_y, algo, window, alpha)
+                algo.computeMetrics()
             
             if verbose > 0:
                 self._show_reports(*args)

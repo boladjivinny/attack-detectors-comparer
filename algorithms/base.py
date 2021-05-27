@@ -1,15 +1,20 @@
-from datetime import datetime
+import pandas as pd
 
 class Algorithm:
     # X is just starttime, and the source IP address
     def __init__(self, name, X, y, labels, label_column='Label'):
-        assert X.shape[0] == y.shape[0]
+        if X is not None:
+            assert X.shape[0] == len(y)
 
         self.name = name
         self.label = label_column
         self.labels = labels
-        self._data = X.copy()
+        if X is not None:
+            self._data = X.copy()
+        else:
+            self._data = pd.DataFrame()
         self._data[self.label] = y.copy()
+
 
         # the metrics
         self.TP = 0 # a
@@ -21,23 +26,71 @@ class Algorithm:
         self.B3 = 0 # Predicted background and real was negative
         self.B4 = 0 # Predicted background and real was positive
         self.B5 = 0 # Predicted background and real was background
-        self.TPR = -1
-        self.TNR = -1
-        self.FNR = -1
-        self.FPR = -1
-        self.Accuracy = -1
-        self.Precision = -1
-        self.ErrorRate = -1
-        self.fmeasure1 = -1
-        self.fmeasure2 = -1
-        self.fmeasure05 = -1
+        self.TPR = -1.0
+        self.TNR = -1.0
+        self.FNR = -1.0
+        self.FPR = -1.0
+        self.Accuracy = -1.0
+        self.Precision = -1.0
+        self.ErrorRate = -1.0
+        self.fmeasure1 = -1.0
+        self.fmeasure2 = -1.0
+        self.fmeasure05 = -1.0
 
+    def computeMetrics(self):
+        """ Compute the metrics """ 
+        try:
+            assert (self.TP + self.FN) != 0
+            self.TPR = self.TP / float( self.TP + self.FN )
+            self.FNR = 1.0 - self.TPR
+        except AssertionError:
+            self.TPR = -1.0
+            self.FNR = -1.0
 
+        try:
+            assert ( self.TN + self.FP ) != 0
+            self.TNR = self.TN  / float( self.TN + self.FP )
+            self.FPR = 1 - self.TNR
+        except AssertionError:
+            self.TNR = -1.0
+            self.FPR = -1.0
 
-    def __call__(self, date: datetime, srcIP: str):
-        return self._data.loc[
-            self._data.StartTime == date & self._data.SrcAddr == srcIP,
-            self.label]
+        try:
+            self.Precision = float(self.TP) / float( self.TP + self.FP)
+        except ZeroDivisionError:
+            self.Precision = -1.0
+
+        try:
+            assert ( self.TP + self.TN + self.FP + self.FN ) != 0
+            self.Accuracy = ( self.TP + self.TN ) / float( self.TP + self.TN + self.FP + self.FN )
+            self.ErrorRate = ( self.FN + self.FP ) / float( self.TP + self.TN + self.FP + self.FN )
+        except AssertionError:
+            self.Accuracy = -1.0
+            self.ErrorRate = -1.0
+
+        # F1-Measure.
+        # With beta=1 F-Measure is also Fscore
+        try:
+            self.fmeasure1 = self.f_score()
+        except ZeroDivisionError:
+            self.fmeasure1 = -1.0
+
+        # With beta=2 F-Measure gives more importance to TPR (recall)
+        try:
+            self.fmeasure2 = self.f_score(2.0)
+        except ZeroDivisionError:
+            self.fmeasure2 = -1.0
+
+        # F0.5-Measure.
+        # With beta=0.5 F-Measure gives more importance to Precision
+        try:
+            self.fmeasure05 = self.f_score(0.5)
+        except ZeroDivisionError:
+            self.fmeasure05 = -1.0
+
+    def f_score(self, beta=1.0):
+        return ( ( (beta * beta) + 1 ) * self.cPrecision * self.cTPR  ) / float( ( beta * beta * self.cPrecision ) + self.cTPR )
+
 
     def __repr__(self):
         """ Default printing method """ 

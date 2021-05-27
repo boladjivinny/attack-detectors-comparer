@@ -57,7 +57,6 @@
 import sys
 
 import pandas as pd
-import numpy as np
 
 from os.path import basename, splitext
 from os import dup2
@@ -86,17 +85,12 @@ def main():
 
     proc = cls_proc(label, labels)
 
-    import time
-
     # create the algorithms
 
-    s = time.time()
     data = pd.read_csv(
         file, 
         usecols=['StartTime', 'SrcAddr', label], parse_dates=[0])
 
-    print(f"loaded data in {time.time() - s} seconds.")
-    s = time.time()
     features = data.drop(columns=[label])
 
     # load the labels as "str" to make the processing easy
@@ -104,32 +98,26 @@ def main():
     baseline = cls_alg(
         "real", features, data[label].astype(str), labels, label
     )
-    print(f"created baseline algo in {time.time() - s} seconds.")
+
     # methods
-    s = time.time()
     algorithms = [
         cls_alg(
             splitext(basename(f.name))[0], 
-            features, 
-            np.loadtxt(f, dtype='str'), labels, label
+            None, 
+            f.read().splitlines(), labels, label
         )
         for f in predictions
     ]
 
-    print(f"set up the algos in {time.time() - s} seconds.")
-
-    s = time.time()
     if dummy:
         names = ['AllNegative', 'AllPositive']
         algorithms += [
             cls_alg(
-                name, features, 
-                np.array([labels[i]] * data.shape[0]), labels, label
+                name, None, 
+                [labels[i]] * data.shape[0], labels, label
             )
             for i, name in enumerate(names)
         ]
-    # create the algo
-    print(f"set up the dummy in {time.time() - s} seconds.")
 
     try:
         if out_file is not None:

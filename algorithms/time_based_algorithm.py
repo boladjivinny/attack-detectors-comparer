@@ -9,16 +9,16 @@ class TimeBasedAlgorithm(Algorithm):
         self.cTN = 0 # d
         self.cFP = 0 # c
         self.cFN = 0 # b
-        self.cTPR = -1
-        self.cTNR = -1
-        self.cFNR = -1
-        self.cFPR = -1
-        self.cAccuracy = -1
-        self.cPrecision = -1
-        self.cErrorRate = -1
-        self.cfmeasure1 = -1
-        self.cfmeasure2 = -1
-        self.cfmeasure05 = -1
+        self.cTPR = -1.0
+        self.cTNR = -1.0
+        self.cFNR = -1.0
+        self.cFPR = -1.0
+        self.cAccuracy = -1.0
+        self.cPrecision = -1.0
+        self.cErrorRate = -1.0
+        self.cfmeasure1 = -1.0
+        self.cfmeasure2 = -1.0
+        self.cfmeasure05 = -1.0
 
     def current_reportprint(self, longest_name, precision=2):
         """ The reported values """ 
@@ -37,58 +37,55 @@ class TimeBasedAlgorithm(Algorithm):
 
     def computeMetrics(self):
         """ Compute the metrics """ 
+        super().computeMetrics()
         try:
-            assert (self.TP + self.FN) != 0
-            self.TPR = self.TP / float( self.TP + self.FN )
-            self.FNR = 1.0 - self.TPR
+            assert (self.cTP + self.cFN) != 0
+            self.cTPR = self.cTP / float( self.cTP + self.cFN )
+            self.cFNR = 1.0 - self.cTPR
         except AssertionError:
-            self.TPR = -1
-            self.FNR = -1
+            self.cTPR = -1.0
+            self.cFNR = -1.0
 
         try:
-            assert ( self.TN + self.FP ) != 0
-            self.TNR = self.TN  / float( self.TN + self.FP )
-            self.FPR = 1 - self.TNR
+            assert ( self.cTN + self.cFP ) != 0
+            self.cTNR = self.cTN  / float( self.cTN + self.cFP )
+            self.cFPR = 1 - self.cTNR
         except AssertionError:
-            self.TNR = -1
-            self.FPR = -1
+            self.cTNR = -1.0
+            self.cFPR = -1.0
 
         try:
-            self.Precision = float(self.TP) / float( self.TP + self.FP)
+            self.cPrecision = float(self.cTP) / float( self.cTP + self.cFP)
         except ZeroDivisionError:
-            self.Precision = -1
+            self.cPrecision = -1.0
 
         try:
-            assert ( self.TP + self.TN + self.FP + self.FN ) != 0
-            self.Accuracy = ( self.TP + self.TN ) / float( self.TP + self.TN + self.FP + self.FN )
-            self.ErrorRate = ( self.FN + self.FP ) / float( self.TP + self.TN + self.FP + self.FN )
+            assert ( self.cTP + self.cTN + self.cFP + self.cFN ) != 0
+            self.cAccuracy = ( self.cTP + self.cTN ) / float( self.cTP + self.cTN + self.cFP + self.cFN )
+            self.ErrorRate = ( self.cFN + self.cFP ) / float( self.cTP + self.cTN + self.cFP + self.cFN )
         except AssertionError:
-            self.Accuracy = -1
-            self.ErrorRate = -1
+            self.cAccuracy = -1.0
+            self.cErrorRate = -1.0
 
         # F1-Measure.
-        self.beta = 1.0
         # With beta=1 F-Measure is also Fscore
         try:
-            self.fmeasure1 = ( ( (self.beta * self.beta) + 1 ) * self.Precision * self.TPR  ) / float( ( self.beta * self.beta * self.Precision ) + self.TPR )
+            self.cfmeasure1 = self.f_score()
         except ZeroDivisionError:
-            self.fmeasure1 = -1
+            self.cfmeasure1 = -1.0
 
-        # F2-Measure.
-        self.beta = 2
         # With beta=2 F-Measure gives more importance to TPR (recall)
         try:
-            self.fmeasure2 = ( ( (self.beta * self.beta) + 1 ) * self.Precision * self.TPR  ) / float( ( self.beta * self.beta * self.Precision ) + self.TPR )
+            self.cfmeasure2 = self.f_score(2.0)
         except ZeroDivisionError:
-            self.fmeasure2 = -1
+            self.cfmeasure2 = -1.0
 
         # F0.5-Measure.
-        self.beta = 0.5
-        # With beta=2 F-Measure gives more importance to Precision
+        # With beta=0.5 F-Measure gives more importance to Precision
         try:
-            self.fmeasure05 = ( ( (self.beta * self.beta) + 1 ) * self.Precision * self.TPR  ) / float( ( self.beta * self.beta * self.Precision ) + self.TPR )
+            self.cfmeasure05 = self.f_score(0.5)
         except ZeroDivisionError:
-            self.fmeasure05 = -1
+            self.cfmeasure05 = -1.0
 
     @property
     def cTP(self):
