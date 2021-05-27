@@ -81,6 +81,8 @@ def main():
     predictions = args.predictions
 
     # create the processer
+    import time
+    s = time.time()
     cls_proc, cls_alg = get_objects_type(comparison_type)
 
     proc = cls_proc(label, labels)
@@ -123,6 +125,9 @@ def main():
         if out_file is not None:
             dup2(out_file.fileno(), sys.stdout.fileno())
             dup2(out_file.fileno(), sys.stderr.fileno())
+
+        e = time.time()
+        print(f'setup completed in {e - s} seconds.')
             
         proc(baseline, *algorithms, window_size=time_window, alpha=alpha, verbose=verbose)
         proc.report_results(algorithms)

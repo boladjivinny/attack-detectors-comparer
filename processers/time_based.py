@@ -1,4 +1,5 @@
 import datetime
+import time
 
 from .base import BaseProcesser
 from sklearn.metrics import confusion_matrix
@@ -19,6 +20,7 @@ class TimeBasedProcesser(BaseProcesser):
         processed = 0
 
         while (processed < data.shape[0]):
+            s = time.time()
             remainder = data.loc[data.Timeframe == -1]
             start_time = remainder['StartTime'].min()
             chunk = remainder.loc[(remainder.StartTime >= start_time) & (remainder.StartTime < start_time + datetime.timedelta(seconds=window_size))]
@@ -26,8 +28,14 @@ class TimeBasedProcesser(BaseProcesser):
             processed += chunk.shape[0]
             window += 1
             data_by_ip = chunk.groupby('SrcAddr')
+            e = time.time()
 
+            print(f'collected the required information in {e - s} seconds.')
+
+            s = time.time()
             true_y = [self.labels[1] if record[self.label_column].isin(self.labels[1:]).any() else self.labels[0] for _, record in data_by_ip]
+            e = time.time()
+            print(f'retrieved the true labels in  {e - s} seconds.')
 
             if verbose > 0:
                 print("####################################")
@@ -44,7 +52,11 @@ class TimeBasedProcesser(BaseProcesser):
             # now the labels for each algorithm and we compared
             ips = chunk.SrcAddr.unique()
             for algo in args:
+                s = time.time()
                 y = [self.labels[1] if record[algo.name].isin(self.labels[1:]).any() else self.labels[0] for _, record in data_by_ip]
+                e = time.time()
+                print(f'retrieved the labels for {algo.name} in  {e - s} seconds.')
+
 
                 # display errors
                 if verbose > 1:
@@ -73,9 +85,12 @@ class TimeBasedProcesser(BaseProcesser):
                                 f'\x1b\x5b0;0;40m, {algo.name}: {py}. '\
                                 f'Decision \x1b\x5b1;31;40mFN\x1b\x5b0;0;40m')
 
+                s = time.time()
                 algo.cTN, algo.cFP, algo.cFN, algo.cTP = confusion_matrix(
                     true_y, y, labels=self.labels[:3]).ravel()
-                algo.computeMetrics()
+                self._process_time_window(true_y, algo, window, alpha)
+                e = time.time()
+                print(f'computed the metrics for {algo.name} in  {e - s} seconds.')
             
             if verbose > 0:
                 self._show_reports(*args)
