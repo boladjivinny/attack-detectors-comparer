@@ -87,6 +87,10 @@ class TimeBasedAlgorithm(Algorithm):
         except ZeroDivisionError:
             self.cfmeasure05 = -1.0
 
+    def f_score(self, beta=1.0):
+        return ( ( (beta * beta) + 1 ) * self.cPrecision * self.cTPR  ) / float( ( beta * beta * self.cPrecision ) + self.cTPR )
+
+
     @property
     def cTP(self):
         return self._cTP

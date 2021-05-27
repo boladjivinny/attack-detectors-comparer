@@ -89,7 +89,7 @@ class Algorithm:
             self.fmeasure05 = -1.0
 
     def f_score(self, beta=1.0):
-        return ( ( (beta * beta) + 1 ) * self.cPrecision * self.cTPR  ) / float( ( beta * beta * self.cPrecision ) + self.cTPR )
+        return ( ( (beta * beta) + 1 ) * self.Precision * self.TPR  ) / float( ( beta * beta * self.Precision ) + self.TPR )
 
 
     def __repr__(self):

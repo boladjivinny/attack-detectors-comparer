@@ -97,12 +97,12 @@ def main():
 
     # load the labels as "str" to make the processing easy
 
-    baseline = cls_alg(
+    algorithms = [cls_alg(
         "real", features, data[label].astype(str), labels, label
-    )
+    )]
 
     # methods
-    algorithms = [
+    algorithms += [
         cls_alg(
             splitext(basename(f.name))[0], 
             None, 
@@ -129,8 +129,9 @@ def main():
         e = time.time()
         print(f'setup completed in {e - s} seconds.')
             
-        proc(baseline, *algorithms, window_size=time_window, alpha=alpha, verbose=verbose)
-        proc.report_results(algorithms)
+        proc(*algorithms, window_size=time_window, alpha=alpha, verbose=verbose)
+        # start from the second entry
+        proc.report_results(algorithms[1:])
         if doplot:
             #plot(file, time_window, comparison_type, time_windows_group)
             pass
