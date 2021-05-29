@@ -16,6 +16,7 @@ class TimeBasedProcesser(BaseProcesser):
         s = time.time()
         label_dict = {k: i for i, k in enumerate(self.labels)}
 
+        algo_names = [*map(lambda algo: algo.name, args)]
         for algo in args:
             data[algo.name] = [label_dict[x] for x in algo.data[self.label_column]]
 
@@ -58,7 +59,11 @@ class TimeBasedProcesser(BaseProcesser):
             #     for algo in args
             # ]
 
-            technique_labels = map(lambda algo: [*map(lambda d: max(d[1].to_list()), grouped[algo.name])], args)
+            technique_labels = grouped[algo_names].agg(max)
+            # ff = grouped[algo_names]
+            # print(ff.agg(max)['real'])
+
+            #technique_labels = [*map(lambda algo: [*map(lambda d: d[1], grouped[algo.name])], args)]
             
             #[[*map(lambda s: s[1][algo.name].max(), grouped)] for algo in args]
             #technique_labels = list(map(lambda algo: list(map(lambda s: int(self.labels[1] in s[1][algo.name].tolist()), grouped)), args))
@@ -66,13 +71,15 @@ class TimeBasedProcesser(BaseProcesser):
             print(f'Retrieved all the labels in {e - s} seconds.')
 
             ss = time.time()
-            for algo, y in zip(args, technique_labels):
+            #for algo, y in zip(args, technique_labels):
+            for algo in args:
+                y = technique_labels[algo.name]
                 #y = [d[0] for d in y]
                 # print(y)
                 if true_y is None:
                     # reference is expected to be the first one
                     true_y = y
-                    true_labels = list(map(lambda x: self.labels[x], true_y))
+                    true_labels = [self.labels[x] for x in true_y]
 
                     if verbose > 0:
                         print("####################################")
