@@ -1,4 +1,4 @@
-#  Copyright (C) 2009  Sebastian Garcia, Martin Grill, Jan Stiborek
+#  Copyright (C) 2021  Vinny Adjibi
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by

@@ -1,7 +1,7 @@
 import argparse
 
-from .algorithms import *
-from .processers import *
+from ..algorithms import *
+from ..processers import *
 
 
 def get_objects_type(comparison_type):
