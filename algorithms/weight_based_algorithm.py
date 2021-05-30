@@ -36,16 +36,49 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
         self.ct_fmeasure2 = -1.0
         self.ct_fmeasure05 = -1.0
 
-    def weighted_reportprint(self, longest_name):
-        """ The reported values """ 
-        # I still did not found out how to use longest_name to change the width of the columns...
-        text = '{0:30} t-TP={1:.4f}, t-TN={2:8}, t-FP={3:8}, t-FN={4:.4f}, t-TPR={5:.3f}, t-TNR={6:.3f}, t-FPR={7:.3f}, t-FNR={8:.3f}, t-Precision={9:7.4f}, t-Accuracy={10:5.4f}, t-ErrorRate={11:5.3f}, t-FM1={12:7.4f}, t-FM2={13:7.4f}, t-FM05={14:7.4f}'.format(self.name, self.t_TP, self.t_TN, self.t_FP, self.t_FN, self.t_TPR, self.t_TNR, self.t_FPR, self.t_FNR, self.t_Precision, self.t_Accuracy, self.t_ErrorRate, self.t_fmeasure1, self.t_fmeasure2, self.t_fmeasure05)
-        print (text)
+    def logMetrics(self):
+        self.rTPR += [self.t_TPR]
+        self.rTNR += [self.t_TNR]
+        self.rFPR += [self.t_FPR]
+        self.rFNR += [self.t_FNR]
+        self.rPrecision += [self.t_Precision]
+        self.rAccuracy += [self.t_Accuracy]
+        self.rErrorRate += [self.t_ErrorRate]
+        self.rFM1 += [self.t_fmeasure1]
+        self.rFM2 += [self.t_fmeasure2]
+        self.rFM05 += [self.t_fmeasure05]
 
-    def weighted_current_reportprint(self, longest_name):
+    def weighted_reportprint(self, max_name_length):
         """ The reported values """ 
-        # I still did not found out how to use longest_name to change the width of the columns...
-        print ('{0:30} t-TP={1:.4f}, t-TN={2:8}, t-FP={3:8}, t-FN={4:.4f}, t-TPR={5:.3f}, t-TNR={6:.3f}, t-FPR={7:.3f}, t-FNR={8:.3f}, t-Precision={9:7.4f}, t-Accuracy={10:5.4f}, t-ErrorRate={11:5.3f}, t-FM1={12:7.4f}, t-FM2={13:7.4f}, t-FM05={14:7.4f}'.format(self.name, self.ct_TP, self.ct_TN, self.ct_FP, self.ct_FN, self.ct_TPR, self.ct_TNR, self.ct_FPR, self.ct_FNR, self.ct_Precision, self.ct_Accuracy, self.ct_ErrorRate, self.ct_fmeasure1, self.ct_fmeasure2, self.ct_fmeasure05))
+        print (
+            f'{self.name:{max_name_length}} TP={self.t_TP:8}, TN='\
+            f'{self.t_TN:8}, FP={self.t_FP:8}, FN={self.t_FN:8}, TPR='\
+            f'{self.t_TPR:.3f}, TNR={self.t_TNR:.3f}, FPR='\
+            f'{self.t_FPR:.3f}'\
+            f', FNR={self.t_FNR:.3f}, Precision={self.t_Precision:7.4f}, '\
+            f'Accuracy={self.t_Accuracy:5.4f}, ErrorRate='\
+            f'{self.t_ErrorRate:5.3f}, FM1={self.t_fmeasure1:7.4f}, '\
+            f'FM2={self.t_fmeasure2:7.4f}, FM05={self.t_fmeasure05:7.4f}'
+        )
+
+    def weighted_current_reportprint(self, max_name_length):
+        """ The reported values """ 
+        print (
+            f'{self.name:{max_name_length}} TP={self.ct_TP:8}, TN='\
+            f'{self.ct_TN:8}, FP={self.ct_FP:8}, FN={self.ct_FN:8}, TPR='\
+            f'{self.ct_TPR:.3f}, TNR={self.ct_TNR:.3f}, FPR='\
+            f'{self.ct_FPR:.3f}'\
+            f', FNR={self.ct_FNR:.3f}, Precision={self.ct_Precision:7.4f}, '\
+            f'Accuracy={self.ct_Accuracy:5.4f}, ErrorRate='\
+            f'{self.ct_ErrorRate:5.3f}, FM1={self.ct_fmeasure1:7.4f}, '\
+            f'FM2={self.ct_fmeasure2:7.4f}, FM05={self.ct_fmeasure05:7.4f}'
+        )
+
+    def csv_reportprint(self):
+        return f'{self.name},{self.t_TP},{self.t_TN},{self.t_FP},{self.t_FN}'\
+            f'{self.t_TPR},{self.t_TNR},{self.t_FPR},{self.t_FNR},'\
+            f'{self.t_Precision},{self.t_Accuracy},{self.t_ErrorRate},'\
+            f'{self.t_fmeasure1},{self.t_fmeasure2},{self.t_fmeasure05}'
 
     def compute_weighted_metrics(self, correcting_function, y_true):
         """ Compute the weighted metrics. Receives the correcting_function value and the amount of labels in the current time window """ 
@@ -179,13 +212,6 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
             # We should add 0 to the current value, that is equal to do nothing.
             pass
 
-
-    def __repr__(self):
-        return repr(f'{self.name} t-TP={self.t_TP:.2f}, t-TN={self.t_TN:.2f},'\
-            f' t-FP={self.t_FP:.2f}, t-FN={self.t_FN:.2f}, '\
-            f't-TPR={self.t_TPR:.2f}, t-TNR={self.t_TNR:.2f}, '\
-            f't-FPR={self.t_FPR:.2f}, t-FNR={self.t_FNR:.2f}, '\
-            f't-Precision={self.t_Precision:.2f}, t-Accuracy='\
-            f'{self.t_Accuracy:.2f}, t-ErrorRate={self.t_ErrorRate:.2f}, '\
-            f't-FM1={self.t_fmeasure1:.2f}, t-FM2={self.t_fmeasure2:.2f}, '\
-            f't-FM05={self.t_fmeasure05:.2f}')
+    @property
+    def w_ErrorRate(self):
+        return self.t_ErrorRate

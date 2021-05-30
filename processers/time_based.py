@@ -39,11 +39,13 @@ class TimeBasedProcesser(BaseProcesser):
                     f'Decision \x1b\x5b1;31;40mFN\x1b\x5b0;0;40m'
             return msg
 
+        self.get_longest_name_length(*args[1:])
         data = args[0].data
 
         label_dict = {k: i for i, k in enumerate(self.labels)}
 
         algo_names = [*map(lambda algo: algo.name, args)]
+        errors = {name: [] for name in algo_names[1:]}
         for algo in args:
             data[algo.name] = [label_dict[x] for x in algo.data[self.label_column]]
 
@@ -96,9 +98,12 @@ class TimeBasedProcesser(BaseProcesser):
                 algo.cTN, algo.cFP, algo.cFN, algo.cTP = confusion_matrix(
                     true_y, y, labels=[0, 1]).ravel()
                 self._process_time_window(true_labels, algo, window, alpha)
+                # save the error rate
+                errors[algo.name] += [100 * algo.w_ErrorRate]
             
             if verbose > 0:
                 self._show_reports(*args[1:])
+        return errors
 
 
     def _get_label(self, series):
@@ -107,9 +112,10 @@ class TimeBasedProcesser(BaseProcesser):
     
     def _process_time_window(self, y_true, algo, tw_id, alpha=None):
         algo.computeMetrics()
+        algo.logMetrics()
 
     def _show_reports(self, *algos):
         print('+ Current Errors +')
         for algo in algos:
-            algo.current_reportprint('AllPositive')
+            algo.current_reportprint(self.max_name_length)
         print()

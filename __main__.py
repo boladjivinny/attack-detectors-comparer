@@ -19,8 +19,12 @@
 # Vinny Adjibi <vinny AT cmu DOT edu>, <vinny.adjibi AT outlook DOT com>
 #
 # Changelog
-# 1.0 
-#    Update the code to have a module architecture.
+# 1.0  Sun 30 May 2021 11:19:55 AM CAT
+#    + Updated the code to be executed with a modular architecture
+#    + Code reformatted for work with Python3
+#    + Allows users to plot any of the error metrics
+#    + Removes the background processing
+#
 # 0.8  Thu Nov  7 09:47:52 UTC 2013
 #       Read the format of the biargus complete weblogs
 # 0.7
@@ -57,6 +61,7 @@
 import sys
 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from os.path import basename, splitext
 from os import dup2
@@ -70,7 +75,7 @@ def main():
     file = args.file
     comparison_type = args.type
     time_window = args.time
-    doplot = args.plot
+    plot_metric = args.plot
     alpha = args.alpha
     csv_file = args.csv
     out_file = args.out
@@ -85,7 +90,7 @@ def main():
 
     proc = cls_proc(label, labels)
 
-    # create the algorithms
+    # create the algorithms. Only the relevant columns are loaded
 
     data = pd.read_csv(
         file, 
@@ -123,13 +128,36 @@ def main():
         if out_file is not None:
             dup2(out_file.fileno(), sys.stdout.fileno())
             dup2(out_file.fileno(), sys.stderr.fileno())
-            
+
         proc(*algorithms, window_size=time_window, alpha=alpha, verbose=verbose)
-        # start from the second entry
         proc.report_results(algorithms[1:])
-        if doplot:
-            #plot(file, time_window, comparison_type, time_windows_group)
-            pass
+        if plot_metric:
+            if comparison_type == 'flow':
+                # fix names for FM
+                metric = plot_metric.replace('FM', 'fmeasure')
+                plt.plot(
+                    [algo.name for algo in algorithms[1:]],
+                    [100 * getattr(algo, metric) for algo in algorithms[1:]]
+                )
+                plt.legend([metric])
+                plt.title(f"Comparison of {metric} for the different techniques")
+                plt.xlabel("Detection technique")
+                plt.ylabel("%")
+            else:
+                # get the values for each algorithm
+                results = {algo.name: getattr(algo, f'r{plot_metric}') for algo in algorithms[1:]}
+                df = pd.DataFrame(results)
+                df.plot(xlabel='Timeframe', ylabel='%', title=f"Evolution of the {plot_metric} over the timeframes ({time_window}s)")
+            if plot_file:
+                plt.savefig(plot_file)
+            else:
+                plt.show()
+        # saving final results to a CSV file if available
+        if csv_file:
+            header = 'Name,TP,TN,FP,FN,TPR,TNR,FPR,FNR,Precision,Accuracy,ErrorRate,fmeasure1,fmeasure2,fmeasure05\n'
+            text = '\n'.join([algo.csv_reportprint() for algo in algorithms[1:]])
+            csv_file.write(f'{header}{text}')
+            csv_file.close()
 
     except Exception as e:
             print("misc. exception (runtime error from user callback?):", e)

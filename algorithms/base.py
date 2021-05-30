@@ -37,6 +37,7 @@ class Algorithm:
         self.fmeasure2 = -1.0
         self.fmeasure05 = -1.0
 
+
     def computeMetrics(self):
         """ Compute the metrics """ 
         try:
@@ -92,14 +93,25 @@ class Algorithm:
         return ( ( (beta * beta) + 1 ) * self.Precision * self.TPR  ) / float( ( beta * beta * self.Precision ) + self.TPR )
 
 
-    def __repr__(self):
+    def reportprint(self, max_name_length):
         """ Default printing method """ 
-        return f'{self.name} TP={self.TP}, TN={self.TN}, FP={self.FP}, '\
-            f'FN={self.FN} TPR={self.TPR:.2f}, TNR={self.TNR:.2f}, '\
-            f'FPR={self.FPR:.2f}, FNR={self.FNR:.2f}, '\
-            f'Precision={self.Precision:.2f}, Accuracy={self.Accuracy:.2f}, '\
-            f'ErrorRate={self.ErrorRate:.2f}, FM1={self.fmeasure1:.2f}, '\
-            f'FM2={self.fmeasure2:.2f}, FM05={self.fmeasure05:.2f}'
+        print (
+            f'{self.name:{max_name_length}} TP={self.TP:8}, TN={self.TN:8},'\
+            f'FP={self.FP:8}, FN={self.FN:8}, TPR={self.TPR:.3f}, '\
+            f'TNR={self.TNR:.3f}, FPR={self.FPR:.3f}, FNR={self.FNR:.3f}, '\
+            f'Precision={self.Precision:7.4f}, Accuracy={self.Accuracy:5.4f}, '\
+            f'ErrorRate={self.ErrorRate:5.3f}, FM1={self.fmeasure1:7.4f}, '\
+            f'FM2={self.fmeasure2:7.4f}, FM05={self.fmeasure05:7.4f}'
+        )
+    
+    def csv_reportprint(self):
+        return f'{self.name},{self.TP},{self.TN},{self.FP},{self.FN},'\
+            f'{self.TPR},{self.TNR},{self.FPR},{self.FNR},'\
+            f'{self.Precision},{self.Accuracy},{self.ErrorRate},'\
+            f'{self.fmeasure1},{self.fmeasure2},{self.fmeasure05}'
+
+    def __str__(self) -> str:
+        return self.name
 
 
     @property

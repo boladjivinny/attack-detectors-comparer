@@ -1,6 +1,5 @@
 from .base import BaseProcesser
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score
-from sklearn.metrics import f1_score, fbeta_score
+from sklearn.metrics import confusion_matrix
 
 class FlowBasedProcesser(BaseProcesser):
     # the arguments should be the techniques
@@ -11,26 +10,15 @@ class FlowBasedProcesser(BaseProcesser):
 
     def __call__(self, *args, window_size=None, alpha=None, verbose=0):
         # here we need to compare the results
-        true_y = args[0].data[self.label_column]
+        self.get_longest_name_length(*args[1:])
+        data = args[0].data
+
+        label_dict = {k: i for i, k in enumerate(self.labels)}
+
+        for algo in args:
+            data[algo.name] = [label_dict[x] for x in algo.data[self.label_column]]
 
         for algo in args[1:]:
-            y = algo.data[self.label_column]
             algo.TN, algo.FP, algo.FN, algo.TP = confusion_matrix(
-                true_y, y, labels=self.labels[:3]).ravel()
+                data[args[0].name], data[algo.name], labels=[0, 1]).ravel()
             algo.computeMetrics()
-            # algo.TNR, algo.FPR, algo.FNR, algo.TPR = confusion_matrix(
-            #     true_y, y, normalize='all', labels=self.labels[:3]).ravel()
-            # algo.Accuracy = accuracy_score(true_y, y, normalize=True)
-            # algo.Precision = precision_score(true_y, y, 
-            #     labels=self.labels[:3], pos_label=self.labels[1])
-            # algo.fmeasure1 = f1_score(true_y, y, 
-            #     labels=self.labels[:3], pos_label=self.labels[1])
-            # algo.fmeasure2 = fbeta_score(true_y, y, beta=2, 
-            #     labels=self.labels[:3], pos_label=self.labels[1])
-            # algo.fmeasure05 = fbeta_score(true_y, y, beta=0.5, 
-            #     labels=self.labels[:3], pos_label=self.labels[1])
-            # try:
-            #     algo.ErrorRate = (algo.FN + algo.FP) / (algo.TN 
-            #         + algo.FP + algo.FN + algo.TP)
-            # except ZeroDivisionError:
-            #     algo.ErrorRate = -1

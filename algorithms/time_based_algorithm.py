@@ -20,24 +20,46 @@ class TimeBasedAlgorithm(Algorithm):
         self.cfmeasure2 = -1.0
         self.cfmeasure05 = -1.0
 
-    def current_reportprint(self, longest_name, precision=2):
-        """ The reported values """ 
-        # I still did not found out how to use longest_name to change the width of the columns...
-        max_len = len(longest_name) + 1
-        print (f'{self.name:{max_len}} TP={self.cTP}, TN={self.cTN}, '\
-            f'FP={self.cFP}, FN={self.cFN}, TPR={self.cTPR:4.{precision}}, '\
-            f'TNR={self.cTNR:.{precision}}, FPR={self.cFPR:.{precision}}, '\
-            f'FNR={self.cFNR:.{precision}}, '\
-            f'Precision={self.cPrecision:.{precision}}, '\
-            f'Accuracy={self.cAccuracy:.{precision}}, '\
-            f'ErrorRate={self.cErrorRate:.{precision}}, '\
-            f'FM1={self.cfmeasure1:.{precision}}, '\
-            f'FM2={self.cfmeasure2:.{precision}}, '\
-            f'FM05={self.cfmeasure05:.{precision}}')
+        # records of values across the timeframes
+        self.rTPR = []
+        self.rTNR = []
+        self.rFPR = []
+        self.rFNR = []
+        self.rPrecision = []
+        self.rAccuracy = []
+        self.rErrorRate = []
+        self.rFM1 = []
+        self.rFM2 = []
+        self.rFM05 = []
+
+    def current_reportprint(self, max_name_length):
+        """ The reported values """
+        print (
+            f'{self.name:{max_name_length}} TP={self.cTP:8}, TN='\
+            f'{self.cTN:8}, FP={self.cFP:8}, FN={self.cFN:8}, TPR='\
+            f'{self.cTPR:.3f}, TNR={self.cTNR:.3f}, FPR={self.cFPR:.3f}'\
+            f', FNR={self.cFNR:.3f}, Precision={self.cPrecision:7.4f}, '\
+            f'Accuracy={self.cAccuracy:5.4f}, ErrorRate='\
+            f'{self.cErrorRate:5.3f}, FM1={self.cfmeasure1:7.4f}, '\
+            f'FM2={self.cfmeasure2:7.4f}, FM05={self.cfmeasure05:7.4f}'
+        )
+
+    def logMetrics(self):
+        self.rTPR += [self.TPR]
+        self.rTNR += [self.TNR]
+        self.rFPR += [self.FPR]
+        self.rFNR += [self.FNR]
+        self.rPrecision += [self.Precision]
+        self.rAccuracy += [self.Accuracy]
+        self.rErrorRate += [self.ErrorRate]
+        self.rFM1 += [self.fmeasure1]
+        self.rFM2 += [self.fmeasure2]
+        self.rFM05 += [self.fmeasure05]
 
     def computeMetrics(self):
         """ Compute the metrics """ 
         super().computeMetrics()
+
         try:
             self.cTPR = float(self.cTP) / float( self.cTP + self.cFN )
             self.cFNR = 1.0 - self.cTPR
@@ -127,3 +149,6 @@ class TimeBasedAlgorithm(Algorithm):
         self._cFN = val
         self.FN += self._cFN
         
+    @property
+    def w_ErrorRate(self):
+        return self.ErrorRate

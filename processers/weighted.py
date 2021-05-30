@@ -17,9 +17,16 @@ class WeightBasedProcesser(TimeBasedProcesser):
         super()._show_reports(*algos)
         print('+ Current Weighted +')
         for algo in algos:
-            algo.weighted_current_reportprint("AllPositive")
+            algo.weighted_current_reportprint(self.max_name_length)
         print()
         print('+ Cumulative Weighted +')
         for algo in algos:
-            algo.weighted_reportprint("AllPositive")
+            algo.weighted_reportprint(self.max_name_length)
         print()
+
+    def report_results(self, algos, common_title='Cumulative Common errors'):
+        super().report_results(algos, common_title)
+        print('Weighted errors')
+        print('---------------')
+        for algo in algos:
+            algo.weighted_reportprint(self.max_name_length)

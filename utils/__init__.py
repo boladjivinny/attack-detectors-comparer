@@ -1,10 +1,31 @@
+"""This modules puts together all the functions that provide a necessary
+feature in running the comparison. It is basically a set of utilities
+functions.
+"""
+
 import argparse
 
 from ..algorithms import *
 from ..processers import *
 
 
-def get_objects_type(comparison_type):
+def get_objects_type(comparison_type) -> tuple:
+    """Identifies the relevant classes to be used to run the comparison.
+
+    This function uses the comparison type to identify the relevant
+    algorithm and processing modules classes that are needed to perform
+    the comparison. 
+
+    Args:
+        comparison_type (`str`): the type of comparison to be performed.
+
+    Returns:
+        tuple(Algorithm, Processer): the algorithm and the processer classes.
+
+    Raises:
+        `ValueError`: when the comparison type does not belong to the accepted
+        type.
+    """
     if comparison_type == 'flow':
         return FlowBasedProcesser, Algorithm
     elif comparison_type == 'time':
@@ -15,7 +36,24 @@ def get_objects_type(comparison_type):
     # if not, raise an error
     raise ValueError('The corresponding type is not supported.')
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
+    """Parses the command-line arguments passed to the module.
+
+    This function sets the arguments that are expected from the program
+    and parses them when the user runs the main script.
+
+    Args:
+        None
+
+    Returns:
+        `Namespace`: an object with all the arguments expected from the
+        program.
+
+    Raises:
+        `argparse.ArgumentError`: when the values passed to the program
+        are not of the type or length expected. Also, when a required 
+        combination of arguments is not observed.
+    """
     parser = argparse.ArgumentParser(
         prog="BotnetDetectorsComparer",
         description='''
@@ -36,15 +74,16 @@ def parse_args():
     parser.add_argument('-T', '--time', type=int, help="while using time "\
         "based comparison, specify the time window to use in seconds.",
         default=0)
-    parser.add_argument('-p', '--plot', action="store_true", 
-        help="plot the fmeasures of all methods.")
+    parser.add_argument('-p', '--plot', choices=['TPR', 'TNR', 'FPR', 'FNR',
+        'Precision', 'Accuracy', 'ErrorRate', 'FM1', 'FM2', 'FM05'], 
+        help='defines the metric that should be plotted.', default=None)
     parser.add_argument('-a', '--alpha', type=float, default=0.01,
         help="in weight mode, use this alpha for computing the score")
-    parser.add_argument('-c', '--csv', type=argparse.FileType('w'),
+    parser.add_argument('-c', '--csv', type=argparse.FileType('w+'),
         help="print the final scores in csv format into the specified file.")
     parser.add_argument('-o', '--out', type=argparse.FileType('w'),
         help="store in a log file everything that is shown in the screen.")
-    parser.add_argument('-P', '--plot-to-file', type=argparse.FileType('w'),
+    parser.add_argument('-P', '--plot-to-file', type=str,
         help="instead of showing the plot on the screen, store it in a file."\
             "Type of plot given by the file extension.")
     parser.add_argument('-l', '--label', type=str, default='Label',
@@ -67,7 +106,6 @@ def parse_args():
     if args.type in ["weighted", "time"] and (args.time == 0):
         parser.error(f"[-t {args.type}] requires -T <time window>.")
     if len(args.labels) != 2:
-        parser.error('--labels expects 2 values.')
-    
+        parser.error('--labels expects 2 values.')    
 
     return args
