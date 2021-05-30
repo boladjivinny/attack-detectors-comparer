@@ -1,7 +1,15 @@
+from pandas.core.frame import DataFrame
 from . import Algorithm
 
 class TimeBasedAlgorithm(Algorithm):
-    def __init__(self, name, X, y, labels, label_column='Label'):
+    """Represents a detection technique compared using timeframes.
+
+    This class extends the base class and add time based metrics
+    intended at being used for timeframe to timeframe evaluation
+    of the performances of the algorithms. This uses source IP
+    addresses rather than flow entries for comparison.
+    """
+    def __init__(self, name: str, X: DataFrame, y: list, labels: list, label_column='Label'):
         super().__init__(name, X, y, labels, label_column)
 
         # These are the values for the current time window only!
@@ -32,8 +40,19 @@ class TimeBasedAlgorithm(Algorithm):
         self.rFM2 = []
         self.rFM05 = []
 
-    def current_reportprint(self, max_name_length):
-        """ The reported values """
+    def current_reportprint(self, max_name_length: int) -> None:
+        """Prints the results of the current time window.
+
+        This function prints out the metrics evaluated for the running
+        time window in a human-readable format.
+
+        Args:
+            max_name_length (`int`): represents the total number of columns
+                taken by the technique's name in the output.
+
+        Returns:
+            None
+        """
         print (
             f'{self.name:{max_name_length}} TP={self.cTP:8}, TN='\
             f'{self.cTN:8}, FP={self.cFP:8}, FN={self.cFN:8}, TPR='\
@@ -44,7 +63,12 @@ class TimeBasedAlgorithm(Algorithm):
             f'FM2={self.cfmeasure2:7.4f}, FM05={self.cfmeasure05:7.4f}'
         )
 
-    def logMetrics(self):
+    def logMetrics(self) -> None:
+        """Records the values of the metrics for each time window.
+
+        This function stores the values of the comparison metrics 
+        for time window being processed at the invocation time.
+        """
         self.rTPR += [self.TPR]
         self.rTNR += [self.TNR]
         self.rFPR += [self.FPR]
@@ -57,7 +81,6 @@ class TimeBasedAlgorithm(Algorithm):
         self.rFM05 += [self.fmeasure05]
 
     def computeMetrics(self):
-        """ Compute the metrics """ 
         super().computeMetrics()
 
         try:
@@ -113,6 +136,9 @@ class TimeBasedAlgorithm(Algorithm):
         return ( ( (beta * beta) + 1 ) * self.cPrecision * self.cTPR  ) / float( ( beta * beta * self.cPrecision ) + self.cTPR )
 
 
+    # Getters and setters for the basic metrics.
+    # When updating the current values, increase the cumulative metrics too.
+    
     @property
     def cTP(self):
         return self._cTP
@@ -148,7 +174,3 @@ class TimeBasedAlgorithm(Algorithm):
     def cFN(self, val):
         self._cFN = val
         self.FN += self._cFN
-        
-    @property
-    def w_ErrorRate(self):
-        return self.ErrorRate

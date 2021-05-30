@@ -2,6 +2,15 @@ from .base import BaseProcesser
 from sklearn.metrics import confusion_matrix
 
 class FlowBasedProcesser(BaseProcesser):
+    """The processing module for a flow-by-flow comparison.
+
+    This module compares the techniques using a flow-by-flow
+    prediction strategy.
+
+    Attributes:
+        label_column (`str`): the name of the column of the labels.
+        labels (`list`): the expected labels for the comparison.
+    """
     # the arguments should be the techniques
     def __init__(self, label_column, labels):
         self.label_column = label_column

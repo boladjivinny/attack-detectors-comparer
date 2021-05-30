@@ -1,7 +1,13 @@
+from numpy import iterable
 from .time_based_algorithm import TimeBasedAlgorithm
 
 class WeightBasedAlgorithm(TimeBasedAlgorithm):
-    def __init__(self, name, X, y, labels, label_column='Label'):
+    """Represents a detection technique compared using class weights.
+
+    This class performs its comparison using weights for computing the
+    metrics at each time window. 
+    """
+    def __init__(self, name: str, X: DataFrame, y: list, labels: list, label_column='Label'):
         super().__init__(name, X, y, labels, label_column)
 
         # These are the cumulative weighted values
@@ -48,8 +54,19 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
         self.rFM2 += [self.t_fmeasure2]
         self.rFM05 += [self.t_fmeasure05]
 
-    def weighted_reportprint(self, max_name_length):
-        """ The reported values """ 
+    def weighted_reportprint(self, max_name_length: int) -> None:
+        """Prints the weighted metrics of the technique..
+
+        This function prints out the weighted metrics evaluated for the 
+        detection technique.
+
+        Args:
+            max_name_length (`int`): represents the total number of columns
+                taken by the technique's name in the output.
+
+        Returns:
+            None
+        """
         print (
             f'{self.name:{max_name_length}} TP={self.t_TP:8}, TN='\
             f'{self.t_TN:8}, FP={self.t_FP:8}, FN={self.t_FN:8}, TPR='\
@@ -61,8 +78,19 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
             f'FM2={self.t_fmeasure2:7.4f}, FM05={self.t_fmeasure05:7.4f}'
         )
 
-    def weighted_current_reportprint(self, max_name_length):
-        """ The reported values """ 
+    def weighted_current_reportprint(self, max_name_length: int):
+        """Prints the weighted metrics for the current time window.
+
+        This function prints out the weighted metrics evaluated for the 
+        running time window in a human-readable format.
+
+        Args:
+            max_name_length (`int`): represents the total number of columns
+                taken by the technique's name in the output.
+
+        Returns:
+            None
+        """
         print (
             f'{self.name:{max_name_length}} TP={self.ct_TP:8}, TN='\
             f'{self.ct_TN:8}, FP={self.ct_FP:8}, FN={self.ct_FN:8}, TPR='\
@@ -80,8 +108,19 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
             f'{self.t_Precision},{self.t_Accuracy},{self.t_ErrorRate},'\
             f'{self.t_fmeasure1},{self.t_fmeasure2},{self.t_fmeasure05}'
 
-    def compute_weighted_metrics(self, correcting_function, y_true):
-        """ Compute the weighted metrics. Receives the correcting_function value and the amount of labels in the current time window """ 
+    def compute_weighted_metrics(self, correcting_function: float, y_true: list) -> None:
+        """Compute the weighted metrics for the technique. 
+        
+        This method computes the weighted metrics based on the value of
+        the correcting function passed.
+        
+        Args:
+            correcting_function (`float`): the computed correction function.
+            y_true (`list` or array-like): the true labels.
+
+        Returns:
+            None
+        """ 
         pos_count = y_true.count(self.labels[1])
         neg_count = y_true.count(self.labels[0])
 
@@ -211,7 +250,3 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
         except ZeroDivisionError:
             # We should add 0 to the current value, that is equal to do nothing.
             pass
-
-    @property
-    def w_ErrorRate(self):
-        return self.t_ErrorRate

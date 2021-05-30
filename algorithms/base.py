@@ -1,8 +1,21 @@
 import pandas as pd
 
 class Algorithm:
+    """Represents the base class for the detection techniques.
+
+    This default class performs a flow-by-flow comparison
+    and output its metrics based on the same.
+
+    Attributes:
+        name (`str`): the name of the detection technique.
+        label (`str`): the name of the column representing the 
+            technique's prediction.
+        labels (`list`): the two labels to be expected in the predictions.
+        data (`pandas.DataFrame`): the features plus the output of the
+            technique.
+    """
     # X is just starttime, and the source IP address
-    def __init__(self, name, X, y, labels, label_column='Label'):
+    def __init__(self, name: str, X: pd.DataFrame, y: list, labels: list, label_column='Label'):
         if X is not None:
             assert X.shape[0] == len(y)
 
@@ -15,17 +28,11 @@ class Algorithm:
             self._data = pd.DataFrame()
         self._data[self.label] = y.copy()
 
-
         # the metrics
         self.TP = 0 # a
         self.TN = 0 # d
         self.FP = 0 # c
         self.FN = 0 # b
-        self.B1 = 0 # Predicted negative and real was background
-        self.B2 = 0 # Predicted positive and real was background
-        self.B3 = 0 # Predicted background and real was negative
-        self.B4 = 0 # Predicted background and real was positive
-        self.B5 = 0 # Predicted background and real was background
         self.TPR = -1.0
         self.TNR = -1.0
         self.FNR = -1.0
@@ -37,9 +44,22 @@ class Algorithm:
         self.fmeasure2 = -1.0
         self.fmeasure05 = -1.0
 
+        return self
+
 
     def computeMetrics(self):
-        """ Compute the metrics """ 
+        """Compute the metrics for the detection technique.
+
+        Given the count of True Positive, False Positive,
+        True Negative and False Negative encountered, this method computes
+        the relevant statistics for the detection technique.
+
+        Args:
+            None
+
+        Returns:
+            self: the object representing the detection technique
+        """ 
         try:
             self.TPR = float(self.TP) / float(self.TP + self.FN)
             self.FNR = 1.0 - self.TPR
@@ -89,12 +109,36 @@ class Algorithm:
         except ZeroDivisionError:
             self.fmeasure05 = -1.0
 
-    def f_score(self, beta=1.0):
+        return self
+
+    def f_score(self, beta=1.0) -> float:
+        """Compute the F-Measure metric for the technique.
+
+        Evaluates the F-measure metric for the detection technique, given the
+        beta value.
+
+        Args:
+            beta (`float`): the value of beta to use for the computation.
+
+        Returns:
+            `float`: the result of the computation.
+        """
         return ( ( (beta * beta) + 1 ) * self.Precision * self.TPR  ) / float( ( beta * beta * self.Precision ) + self.TPR )
 
 
-    def reportprint(self, max_name_length):
-        """ Default printing method """ 
+    def reportprint(self, max_name_length: int) -> None:
+        """Prints the detailed statistical metrics for the technique.
+
+        This method prints out the estimation of the metrics for the 
+        detection technique in a human-readable format. 
+
+        Args:
+            max_name_length (`int`): represents the total number of columns
+                taken by the technique's name in the output.
+
+        Returns:
+            None
+        """ 
         print (
             f'{self.name:{max_name_length}} TP={self.TP:8}, TN={self.TN:8},'\
             f'FP={self.FP:8}, FN={self.FN:8}, TPR={self.TPR:.3f}, '\
@@ -104,7 +148,18 @@ class Algorithm:
             f'FM2={self.fmeasure2:7.4f}, FM05={self.fmeasure05:7.4f}'
         )
     
-    def csv_reportprint(self):
+    def csv_reportprint(self) -> str:
+        """Returns a CSV representation of the metrics computed.
+
+        This function prints out the metrics in a comma separated
+        format to be saved in a file.
+
+        Args:
+            None
+
+        Returns:
+            the CSV representation of the metrics.
+        """
         return f'{self.name},{self.TP},{self.TN},{self.FP},{self.FN},'\
             f'{self.TPR},{self.TNR},{self.FPR},{self.FNR},'\
             f'{self.Precision},{self.Accuracy},{self.ErrorRate},'\
@@ -115,5 +170,7 @@ class Algorithm:
 
 
     @property
-    def data(self):
+    def data(self) -> pd.DataFrame:
+        """Returns the data (features + label) of the technique.
+        """
         return self._data

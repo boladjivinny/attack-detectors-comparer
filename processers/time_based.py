@@ -1,3 +1,4 @@
+from algorithms.base import Algorithm
 import datetime
 
 from .base import BaseProcesser
@@ -5,7 +6,16 @@ from sklearn.metrics import confusion_matrix
 
 
 class TimeBasedProcesser(BaseProcesser):
-    # the arguments should be the techniques
+    """The processing module for a flow-by-flow comparison.
+
+    This module compares the techniques using time windows
+    and the occurence of IPs both in the normal and malicious
+    classes.
+
+    Attributes:
+        label_column (`str`): the name of the column of the labels.
+        labels (`list`): the expected labels for the comparison.
+    """
     def __init__(self, label_column, labels):
         self.label_column = label_column
         self.labels = labels
@@ -45,7 +55,6 @@ class TimeBasedProcesser(BaseProcesser):
         label_dict = {k: i for i, k in enumerate(self.labels)}
 
         algo_names = [*map(lambda algo: algo.name, args)]
-        errors = {name: [] for name in algo_names[1:]}
         for algo in args:
             data[algo.name] = [label_dict[x] for x in algo.data[self.label_column]]
 
@@ -98,23 +107,39 @@ class TimeBasedProcesser(BaseProcesser):
                 algo.cTN, algo.cFP, algo.cFN, algo.cTP = confusion_matrix(
                     true_y, y, labels=[0, 1]).ravel()
                 self._process_time_window(true_labels, algo, window, alpha)
-                # save the error rate
-                errors[algo.name] += [100 * algo.w_ErrorRate]
             
             if verbose > 0:
                 self._show_reports(*args[1:])
-        return errors
-
-
-    def _get_label(self, series):
-        # series is a tuple, (used internally)
-        return len([self.labels[0]] + series[1][self.label_column].unique()) - 1
     
-    def _process_time_window(self, y_true, algo, tw_id, alpha=None):
+    def _process_time_window(self, y_true: list, algo: Algorithm, tw_id: int, alpha=None) -> None:
+        """Performs the necessary computation and other steps needed for each
+        algorithm and time window.
+
+        Args:
+            y_true (`list`): the true labels for the time window.
+            algo: (`Algorithm`): the detection technique being processed.
+            tw_id (`int`): the time window's ID.
+            alpha (`alpha`): the value of alpha used for computing the
+                correcting function.
+
+        Returns:
+            None
+        """
         algo.computeMetrics()
         algo.logMetrics()
 
-    def _show_reports(self, *algos):
+    def _show_reports(self, *algos) -> None:
+        """Prints the current metrics for all the detection techniques.
+
+        This method outputs all the relevant metrics for the detection
+        technique upon the time window is processed.
+
+        Args:
+            algos (`list`): the list of algorithms.
+
+        Returns:
+            None
+        """
         print('+ Current Errors +')
         for algo in algos:
             algo.current_reportprint(self.max_name_length)
