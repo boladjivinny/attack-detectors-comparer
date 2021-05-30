@@ -9,7 +9,9 @@ class BaseProcesser(ABC):
         None
     """
     @abstractmethod
-    def __call__(self, *args: list, window_size=None, alpha=None, verbose=0) -> None:
+    def __call__(
+        self, *args: list, window_size=None, alpha=None, verbose=0
+        ) -> None:
         """Runs the comparison of a set of detection techniques.
 
         This methods executes the necessary action in order to evaluate the

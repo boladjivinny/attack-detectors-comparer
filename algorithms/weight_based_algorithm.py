@@ -1,5 +1,6 @@
 from numpy import iterable
 from .time_based_algorithm import TimeBasedAlgorithm
+import pandas as pd
 
 class WeightBasedAlgorithm(TimeBasedAlgorithm):
     """Represents a detection technique compared using class weights.
@@ -7,7 +8,10 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
     This class performs its comparison using weights for computing the
     metrics at each time window. 
     """
-    def __init__(self, name: str, X: DataFrame, y: list, labels: list, label_column='Label'):
+    def __init__(
+        self, name: str, X: pd.DataFrame, y: list, 
+        labels: list, label_column='Label'
+    ):
         super().__init__(name, X, y, labels, label_column)
 
         # These are the cumulative weighted values
@@ -108,7 +112,9 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
             f'{self.t_Precision},{self.t_Accuracy},{self.t_ErrorRate},'\
             f'{self.t_fmeasure1},{self.t_fmeasure2},{self.t_fmeasure05}'
 
-    def compute_weighted_metrics(self, correcting_function: float, y_true: list) -> None:
+    def compute_weighted_metrics(
+        self, correcting_function: float, y_true: list
+        ) -> None:
         """Compute the weighted metrics for the technique. 
         
         This method computes the weighted metrics based on the value of
@@ -125,9 +131,9 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
         neg_count = y_true.count(self.labels[0])
 
         if (pos_count != 0):
-            self.ct_TP = ( self.cTP * correcting_function ) / float(pos_count)
+            self.ct_TP = (self.cTP * correcting_function) / float(pos_count)
             self.t_TP = self.t_TP + self.ct_TP
-            self.ct_FN = ( self.cFN * correcting_function ) / float(pos_count)
+            self.ct_FN = (self.cFN * correcting_function) / float(pos_count)
             self.t_FN = self.t_FN + self.ct_FN
         
         if (neg_count !=0):
@@ -143,10 +149,12 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
         try:
             self.ct_TPR = self.ct_TP / float(self.ct_TP + self.ct_FN)
         except ZeroDivisionError:
-            # We should add 0 to the current value, that is equal to do nothing.
+            # We should add 0 to the current value, that is equivalent to do 
+            # nothing.
             pass
 
-        # t_TNR. Also Correct-reject rate or specificity. Portion of negative examples the model predicts correctly.
+        # t_TNR. Also Correct-reject rate or specificity. Portion of negative
+        #  examples the model predicts correctly.
         try:
             self.t_TNR = self.t_TN / float( self.t_TN + self.t_FP )
         except ZeroDivisionError:
@@ -154,10 +162,11 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
         try:
             self.ct_TNR = self.ct_TN / float( self.ct_TN + self.ct_FP )
         except ZeroDivisionError:
-            # We should add 0 to the current value, that is equal to do nothing.
+            # We should add 0 to the current value, that is equivalent to do nothing.
             pass
 
-        # t_FPR. Also False-alarm rate. The portion of negative examples that the model wrongly predicts as positive.
+        # t_FPR. Also False-alarm rate. The portion of negative examples that
+        #  the model wrongly predicts as positive.
         try:
             self.t_FPR = self.t_FP / float( self.t_TN + self.t_FP )
         except ZeroDivisionError:
@@ -165,10 +174,12 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
         try:
             self.ct_FPR = self.ct_FP / float( self.ct_TN + self.ct_FP )
         except ZeroDivisionError:
-            # We should add 0 to the current value, that is equal to do nothing.
+            # We should add 0 to the current value, that is equivalent to do 
+            # nothing.
             pass
 
-        # t_FNR. Also Miss rate. Portion of positives examples that the classifier wrongly predicts as negative.
+        # t_FNR. Also Miss rate. Portion of positives examples that 
+        # the classifier wrongly predicts as negative.
         try:
             self.t_FNR = self.t_FN / float(self.t_TP + self.t_FN)
         except ZeroDivisionError:
@@ -176,77 +187,107 @@ class WeightBasedAlgorithm(TimeBasedAlgorithm):
         try:
             self.ct_FNR = self.ct_FN / float(self.ct_TP + self.ct_FN)
         except ZeroDivisionError:
-            # We should add 0 to the current value, that is equal to do nothing.
+            # We should add 0 to the current value, that is equivalent to do 
+            # nothing.
             pass
 
-        # t_Precision. Portion of all the examples predicted as positives that were really positives.
+        # t_Precision. Portion of all the examples predicted as positives 
+        # that were really positives.
         try:
-            self.t_Precision = float(self.t_TP) / float(self.t_TP + self.t_FP)
+            self.t_Precision = float(self.t_TP) / float(
+                self.t_TP + self.t_FP)
         except ZeroDivisionError:
             self.t_Precision = -1
         try:
-            self.ct_Precision = float(self.ct_TP) / float(self.ct_TP + self.ct_FP)
+            self.ct_Precision = float(self.ct_TP) / float(
+                self.ct_TP + self.ct_FP)
         except ZeroDivisionError:
-            # We should add 0 to the current value, that is equal to do nothing.
+            # We should add 0 to the current value, that is equivalent to do 
+            # nothing.
             pass
 
-        # t_Accuracy. The portion of examples that the model predicts correctly
+        # t_Accuracy. The portion of examples that the model predicts 
+        # correctly
         try:
-            self.t_Accuracy = (self.t_TP + self.t_TN) / float( self.t_TP + self.t_TN + self.t_FP + self.t_FN )
+            self.t_Accuracy = (self.t_TP + self.t_TN) / float(
+                self.t_TP + self.t_TN + self.t_FP + self.t_FN )
         except ZeroDivisionError:
             self.t_Accuracy = -1
         try:
-            self.ct_Accuracy = (self.ct_TP + self.ct_TN) / float( self.ct_TP + self.ct_TN + self.ct_FP + self.ct_FN )
+            self.ct_Accuracy = (self.ct_TP + self.ct_TN) / float(
+                self.ct_TP + self.ct_TN + self.ct_FP + self.ct_FN)
         except ZeroDivisionError:
-            # We should add 0 to the current value, that is equal to do nothing.
+            # We should add 0 to the current value, that is equivalent to do 
+            # nothing.
             pass
 
-        # t_Error Rate. The portion of examples that the model predicts incorrectly
+        # t_Error Rate. The portion of examples that the model predicts 
+        # incorrectly
         try:
-            self.t_ErrorRate = (self.t_FN + self.t_FP) / float( self.t_TP + self.t_TN + self.t_FP + self.t_FN )
+            self.t_ErrorRate = (self.t_FN + self.t_FP) / float(
+                self.t_TP + self.t_TN + self.t_FP + self.t_FN )
         except ZeroDivisionError:
             self.t_ErrorRate = -1
         try:
-            self.ct_ErrorRate = (self.ct_FN + self.ct_FP) / float( self.ct_TP + self.ct_TN + self.ct_FP + self.ct_FN )
+            self.ct_ErrorRate = (self.ct_FN + self.ct_FP) / float(
+                self.ct_TP + self.ct_TN + self.ct_FP + self.ct_FN )
         except ZeroDivisionError:
-            # We should add 0 to the current value, that is equal to do nothing.
+            # We should add 0 to the current value, that is equivalent to do 
+            # nothing.
             pass
 
+        t_fmeasure = lambda b, p, t: (
+             ( (b * b) + 1 ) * p * t ) / float( ( b * b * p ) + t)
         # T1-Measure.
-        self.beta = 1.0
+        beta = 1.0
         # With beta=1 F-Measure is also Fscore
         try:
-            self.t_fmeasure1 = ( ( (self.beta * self.beta) + 1 ) * self.t_Precision * self.t_TPR  ) / float( ( self.beta * self.beta * self.t_Precision ) + self.t_TPR )
+            self.t_fmeasure1 = t_fmeasure(
+                beta, self.t_Precision, self.t_TPR
+            )
         except ZeroDivisionError:
             self.t_fmeasure1 = -1
         try:
-            self.ct_fmeasure1 = ( ( (self.beta * self.beta) + 1 ) * self.ct_Precision * self.ct_TPR  ) / float( ( self.beta * self.beta * self.ct_Precision ) + self.ct_TPR )
+            self.ct_fmeasure1 = t_fmeasure(
+                beta, self.ct_Precision, self.ct_TPR
+            )
         except ZeroDivisionError:
-            # We should add 0 to the current value, that is equal to do nothing.
+            # We should add 0 to the current value, that is equivalent to do 
+            # nothing.
             pass
 
         # T2-Measure.
-        self.beta = 2.0
+        beta = 2.0
         # With beta=2 F-Measure gives more importance to TPR (recall)
         try:
-            self.t_fmeasure2 = ( ( (self.beta * self.beta) + 1 ) * self.t_Precision * self.t_TPR  ) / float( ( self.beta * self.beta * self.t_Precision ) + self.t_TPR )
+            self.t_fmeasure2 = t_fmeasure(
+                beta, self.t_Precision, self.t_TPR
+            )
         except ZeroDivisionError:
             self.t_fmeasure2 = -1
         try:
-            self.ct_fmeasure2 = ( ( (self.beta * self.beta) + 1 ) * self.ct_Precision * self.ct_TPR  ) / float( ( self.beta * self.beta * self.ct_Precision ) + self.ct_TPR )
+            self.ct_fmeasure2 = t_fmeasure(
+                beta, self.ct_Precision, self.ct_TPR
+            )
         except ZeroDivisionError:
-            # We should add 0 to the current value, that is equal to do nothing.
+            # We should add 0 to the current value, that is equivalent to do 
+            # nothing.
             pass
 
         # F0.5-Measure.
-        self.beta = 0.5
+        beta = 0.5
         # With beta=2 F-Measure gives more importance to Precision 
         try:
-            self.t_fmeasure05 = ( ( (self.beta * self.beta) + 1 ) * self.t_Precision * self.t_TPR  ) / float( ( self.beta * self.beta * self.t_Precision ) + self.t_TPR )
+            self.t_fmeasure05 = t_fmeasure(
+                beta, self.t_Precision, self.t_TPR
+            )
         except ZeroDivisionError:
             self.t_fmeasure05 = -1
         try:
-            self.ct_fmeasure05 = ( ( (self.beta * self.beta) + 1 ) * self.ct_Precision * self.ct_TPR  ) / float( ( self.beta * self.beta * self.ct_Precision ) + self.ct_TPR )
+            self.ct_fmeasure05 = t_fmeasure(
+                beta, self.ct_Precision, self.ct_TPR
+            )
         except ZeroDivisionError:
-            # We should add 0 to the current value, that is equal to do nothing.
+            # We should add 0 to the current value, that is equivalent to do 
+            # nothing.
             pass

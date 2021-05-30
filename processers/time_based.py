@@ -56,7 +56,9 @@ class TimeBasedProcesser(BaseProcesser):
 
         algo_names = [*map(lambda algo: algo.name, args)]
         for algo in args:
-            data[algo.name] = [label_dict[x] for x in algo.data[self.label_column]]
+            data[algo.name] = [
+                label_dict[x] for x in algo.data[self.label_column]
+            ]
 
         window = 0
         remaining = data.shape[0]
@@ -66,8 +68,12 @@ class TimeBasedProcesser(BaseProcesser):
 
         while (remaining > 0):
             end_time = start_time + datetime.timedelta(seconds=window_size)
-            chunk = data.loc[(data['StartTime'] >= start_time) & (data['StartTime'] < end_time)]
-            start_time = data.loc[data['StartTime'] >= end_time, 'StartTime'].min()
+            chunk = data.loc[
+                (data['StartTime'] >= start_time) & 
+                (data['StartTime'] < end_time)
+            ]
+            start_time = data.loc[
+                data['StartTime'] >= end_time, 'StartTime'].min()
             remaining -= len(chunk)
             window += 1
             # now the labels for each algorithm and we compared
@@ -80,7 +86,10 @@ class TimeBasedProcesser(BaseProcesser):
                 print("####################################")
                 print(f'Time Window Number: {window}')
                 print(f'Amount of algorithms being used: {len(args)-1}')
-                ips_report = {ll: true_y.count(i) for i, ll in enumerate(self.labels)}
+                ips_report = {
+                    ll: true_y.count(i) 
+                    for i, ll in enumerate(self.labels)
+                }
                 print(f'Amount of unique ips: {ips_report}')
                 labels_report = dict(chunk[self.label_column].value_counts())
                 print(f'Amount of labels: {labels_report}')
@@ -111,7 +120,10 @@ class TimeBasedProcesser(BaseProcesser):
             if verbose > 0:
                 self._show_reports(*args[1:])
     
-    def _process_time_window(self, y_true: list, algo: Algorithm, tw_id: int, alpha=None) -> None:
+    def _process_time_window(
+        self, y_true: list, algo: Algorithm, 
+        tw_id: int, alpha=None
+        ) -> None:
         """Performs the necessary computation and other steps needed for each
         algorithm and time window.
 

@@ -9,7 +9,10 @@ class TimeBasedAlgorithm(Algorithm):
     of the performances of the algorithms. This uses source IP
     addresses rather than flow entries for comparison.
     """
-    def __init__(self, name: str, X: DataFrame, y: list, labels: list, label_column='Label'):
+    def __init__(
+        self, name: str, X: DataFrame, y: list, labels: list, 
+        label_column='Label'
+    ):
         super().__init__(name, X, y, labels, label_column)
 
         # These are the values for the current time window only!
@@ -103,12 +106,14 @@ class TimeBasedAlgorithm(Algorithm):
             self.cPrecision = -1.0
 
         try:
-            self.cAccuracy = ( self.cTP + self.cTN ) / float( self.cTP + self.cTN + self.cFP + self.cFN )
+            self.cAccuracy = ( self.cTP + self.cTN ) / float( 
+                self.cTP + self.cTN + self.cFP + self.cFN )
         except ZeroDivisionError:
             self.cAccuracy = -1.0
 
         try:
-            self.cErrorRate = ( self.cFN + self.cFP ) / float( self.cTP + self.cTN + self.cFP + self.cFN )
+            self.cErrorRate = ( self.cFN + self.cFP ) / float( 
+                self.cTP + self.cTN + self.cFP + self.cFN )
         except AssertionError:
             self.cErrorRate = -1.0
 
@@ -133,12 +138,14 @@ class TimeBasedAlgorithm(Algorithm):
             self.cfmeasure05 = -1.0
 
     def f_score(self, beta=1.0):
-        return ( ( (beta * beta) + 1 ) * self.cPrecision * self.cTPR  ) / float( ( beta * beta * self.cPrecision ) + self.cTPR )
+        return ( 
+            ( (beta * beta) + 1 ) * self.cPrecision * self.cTPR  ) / float(
+                 ( beta * beta * self.cPrecision ) + self.cTPR )
 
 
     # Getters and setters for the basic metrics.
     # When updating the current values, increase the cumulative metrics too.
-    
+
     @property
     def cTP(self):
         return self._cTP

@@ -25,7 +25,9 @@ class FlowBasedProcesser(BaseProcesser):
         label_dict = {k: i for i, k in enumerate(self.labels)}
 
         for algo in args:
-            data[algo.name] = [label_dict[x] for x in algo.data[self.label_column]]
+            data[algo.name] = [
+                label_dict[x] for x in algo.data[self.label_column]
+            ]
 
         for algo in args[1:]:
             algo.TN, algo.FP, algo.FN, algo.TP = confusion_matrix(

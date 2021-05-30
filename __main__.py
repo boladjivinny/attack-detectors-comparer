@@ -129,7 +129,10 @@ def main():
             dup2(out_file.fileno(), sys.stdout.fileno())
             dup2(out_file.fileno(), sys.stderr.fileno())
 
-        proc(*algorithms, window_size=time_window, alpha=alpha, verbose=verbose)
+        proc(
+            *algorithms, window_size=time_window, 
+            alpha=alpha, verbose=verbose
+        )
         proc.report_results(algorithms[1:])
         if plot_metric:
             if comparison_type == 'flow':
@@ -140,22 +143,34 @@ def main():
                     [100 * getattr(algo, metric) for algo in algorithms[1:]]
                 )
                 plt.legend([metric])
-                plt.title(f"Comparison of {metric} for the different techniques")
+                plt.title(
+                    f"Comparison of {metric} for the different techniques"
+                )
                 plt.xlabel("Detection technique")
                 plt.ylabel("%")
             else:
                 # get the values for each algorithm
-                results = {algo.name: getattr(algo, f'r{plot_metric}') for algo in algorithms[1:]}
+                results = {
+                    algo.name: 
+                    getattr(algo, f'r{plot_metric}') 
+                    for algo in algorithms[1:]
+                }
                 df = pd.DataFrame(results)
-                df.plot(xlabel='Timeframe', ylabel='%', title=f"Evolution of the {plot_metric} over the timeframes ({time_window}s)")
+                df.plot(xlabel='Timeframe', ylabel='%', 
+                    title=f"Evolution of the {plot_metric} over the "\
+                    f"timeframes ({time_window}s)"
+                )
             if plot_file:
                 plt.savefig(plot_file)
             else:
                 plt.show()
         # saving final results to a CSV file if available
         if csv_file:
-            header = 'Name,TP,TN,FP,FN,TPR,TNR,FPR,FNR,Precision,Accuracy,ErrorRate,fmeasure1,fmeasure2,fmeasure05\n'
-            text = '\n'.join([algo.csv_reportprint() for algo in algorithms[1:]])
+            header = 'Name,TP,TN,FP,FN,TPR,TNR,FPR,FNR,Precision,Accuracy,'\
+                'ErrorRate,fmeasure1,fmeasure2,fmeasure05\n'
+            text = '\n'.join(
+                [algo.csv_reportprint() for algo in algorithms[1:]]
+            )
             csv_file.write(f'{header}{text}')
             csv_file.close()
 

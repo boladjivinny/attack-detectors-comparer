@@ -15,7 +15,10 @@ class Algorithm:
             technique.
     """
     # X is just starttime, and the source IP address
-    def __init__(self, name: str, X: pd.DataFrame, y: list, labels: list, label_column='Label'):
+    def __init__(
+        self, name: str, X: pd.DataFrame, y: list, 
+        labels: list, label_column='Label'
+    ):
         if X is not None:
             assert X.shape[0] == len(y)
 
@@ -80,12 +83,14 @@ class Algorithm:
             self.Precision = -1.0
 
         try:
-            self.Accuracy = ( self.TP + self.TN ) / float( self.TP + self.TN + self.FP + self.FN )
+            self.Accuracy = ( self.TP + self.TN ) / float( 
+                self.TP + self.TN + self.FP + self.FN )
         except ZeroDivisionError:
             self.Accuracy = -1.0
 
         try:
-            self.ErrorRate = ( self.FN + self.FP ) / float( self.TP + self.TN + self.FP + self.FN )
+            self.ErrorRate = ( self.FN + self.FP ) / float( 
+                self.TP + self.TN + self.FP + self.FN )
         except AssertionError:
             self.ErrorRate = -1.0
 
@@ -123,7 +128,9 @@ class Algorithm:
         Returns:
             `float`: the result of the computation.
         """
-        return ( ( (beta * beta) + 1 ) * self.Precision * self.TPR  ) / float( ( beta * beta * self.Precision ) + self.TPR )
+        return ( 
+            ( (beta * beta) + 1 ) * self.Precision * self.TPR  ) / float(
+             ( beta * beta * self.Precision ) + self.TPR )
 
 
     def reportprint(self, max_name_length: int) -> None:
@@ -143,8 +150,8 @@ class Algorithm:
             f'{self.name:{max_name_length}} TP={self.TP:8}, TN={self.TN:8},'\
             f'FP={self.FP:8}, FN={self.FN:8}, TPR={self.TPR:.3f}, '\
             f'TNR={self.TNR:.3f}, FPR={self.FPR:.3f}, FNR={self.FNR:.3f}, '\
-            f'Precision={self.Precision:7.4f}, Accuracy={self.Accuracy:5.4f}, '\
-            f'ErrorRate={self.ErrorRate:5.3f}, FM1={self.fmeasure1:7.4f}, '\
+            f'Precision={self.Precision:7.4f}, Accuracy={self.Accuracy:5.4f}'\
+            f', ErrorRate={self.ErrorRate:5.3f}, FM1={self.fmeasure1:7.4f}, '\
             f'FM2={self.fmeasure2:7.4f}, FM05={self.fmeasure05:7.4f}'
         )
     

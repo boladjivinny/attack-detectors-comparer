@@ -23,8 +23,8 @@ def get_objects_type(comparison_type) -> tuple:
         tuple(Algorithm, Processer): the algorithm and the processer classes.
 
     Raises:
-        `ValueError`: when the comparison type does not belong to the accepted
-        type.
+        `ValueError`: when the comparison type does not belong to the 
+        accepted type.
     """
     if comparison_type == 'flow':
         return FlowBasedProcesser, Algorithm
