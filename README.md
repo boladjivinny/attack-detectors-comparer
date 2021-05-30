@@ -76,3 +76,6 @@ If you use this package in your work, please cite it as:
 # Getting help
 To get support regarding this package, please log an issue or shoot me an email
 at vinny.adjibi@outlook.com and I will make sure to answer as soon as possible.
+
+# References
+[1]  S.  Garcia,  M.  Grill,  J.  Stiborek,  and  A.  Zunino,  “An  empirical  comparison  of  botnetdetection  methods,”Comput.  Secur.,  vol.  45,  no.  8,  pp.  100–123,  Sep.  2014.  [Online].Available: http://www.sciencedirect.com/science/article/pii/S0167404814000923
