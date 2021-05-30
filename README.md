@@ -15,7 +15,7 @@ The package requires:
 To install the package, run the following command:
 
 ```bash
-pip install git+git@github.com:boladjivinny/attack-detectors-comparer.git
+pip install git+https://github.com/boladjivinny/attack-detectors-comparer.git
 ```
 
 # Usage
