@@ -1,4 +1,4 @@
-from algorithms.base import Algorithm
+from ..algorithms.base import Algorithm
 import datetime
 
 from .base import BaseProcesser
