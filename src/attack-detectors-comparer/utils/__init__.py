@@ -102,7 +102,7 @@ def parse_args() -> argparse.Namespace:
 
     args = parser.parse_args()
 
-    if args.type in ["weighted", "time"] and (args.time == 0):
+    if args.type in ["weight", "time"] and (args.time == 0):
         parser.error(f"[-t {args.type}] requires -T <time window>.")
     if len(args.labels) != 2:
         parser.error('--labels expects 2 values.')    
